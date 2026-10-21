@@ -1,0 +1,83 @@
+# Data configuration for the household energy forecasting project.
+# Only verified preprocessing settings are included here.
+
+raw_data_path: data/raw/energy_weather_raw_data.csv
+interim_hourly_path: data/interim/hourly_aggregated.csv
+forecast_ready_path: data/interim/forecast_ready_hourly.csv
+window_index_path: data/interim/window_index.csv
+
+timestamp_column: date
+
+expected_observations_per_hour: 60
+
+primary_target: hourly_active_power
+
+primary_energy_features:
+  - active_power
+
+primary_weather_features:
+  - temp
+  - feels_like
+  - humidity
+  - pressure
+  - speed
+  - wind_sin
+  - wind_cos
+
+secondary_electrical_features:
+  - current
+  - voltage
+  - reactive_power
+  - apparent_power
+  - power_factor
+
+future_weather_columns:
+  - "temp_t+1"
+  - "feels_like_t+1"
+
+excluded_primary_weather_columns:
+  - main
+  - description
+  - temp_min
+  - temp_max
+
+# Step 3.6: Coverage threshold (selected from candidate analysis)
+valid_hour_coverage_threshold: 0.90
+
+# Forecasting design
+forecasting:
+  history_length: 168    # hours of historical context
+  forecast_horizon: 24   # hours to forecast
+  window_size: 192       # history_length + forecast_horizon
+
+# Step 3.7: Chronological split configuration
+split:
+  train_fraction: 0.65
+  validation_fraction: 0.15
+  calibration_fraction: 0.10
+  test_fraction: 0.10
+  chronological: true
+  shuffle: false
+
+# Step 3.8: Feature scaling configuration
+scaling:
+  method: standard
+  fit_on: train_only
+  energy_features:
+    - hourly_active_power
+  weather_features:
+    - temp
+    - feels_like
+    - humidity
+    - pressure
+    - speed
+    - wind_sin
+    - wind_cos
+
+  metadata_columns:
+    - date
+    - n_observations
+    - coverage_ratio
+    - is_valid_hour
+
+

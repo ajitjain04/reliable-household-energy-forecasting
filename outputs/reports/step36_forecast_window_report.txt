@@ -1,0 +1,25 @@
+STEP 3.6 FORECAST WINDOW AUDIT & REPORT
+=======================================
+
+Source file: e:\reliable-household-energy-forecasting\data\interim\hourly_aggregated.csv
+Total hourly rows: 10,234
+Valid coverage threshold: 90%
+Valid hours: 10,043 (98.13%)
+Invalid hours: 191 (1.87%)
+
+Run Statistics:
+  Total valid runs: 71
+  Longest run: 1501 hours
+  Shortest run: 1 hours
+  Mean run length: 141.5 hours
+  Median run length: 23.0 hours
+
+Window Statistics:
+  History length: 168 hours
+  Forecast horizon: 24 hours
+  Total window size: 192 hours
+  Total valid windows: 5,871
+  Earliest forecast origin: 2022-12-09T09:00:00.000000
+  Latest forecast origin: 2024-01-02T00:00:00.000000
+  Forecast-ready dataset path: e:\reliable-household-energy-forecasting\data\interim\forecast_ready_hourly.csv
+  Window index path: e:\reliable-household-energy-forecasting\data\interim\window_index.csv

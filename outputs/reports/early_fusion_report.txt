@@ -1,0 +1,160 @@
+======================================================================
+EARLY FUSION LSTM REPORT
+Step 4.2 -- Reliable Multimodal Household Energy Forecasting
+======================================================================
+
+Generated: 2026-09-23 14:05:00
+
+----------------------------------------------------------------------
+1. ARCHITECTURE
+----------------------------------------------------------------------
+
+  Model:              EarlyFusionLSTM
+  Fusion type:        Early Fusion (input-level concatenation)
+  Input:              (batch, 168, 8)
+  LSTM hidden size:   64
+  LSTM layers:        2
+  LSTM dropout:       0.2
+  Output head:        Linear(64, 24)
+  Output:             (batch, 24)
+  Trainable params:   53,784
+  Features used:      [hourly_active_power, temp, feels_like, humidity, pressure, speed, wind_sin, wind_cos]
+  Weather used:       True
+
+  Feature order at each timestep:
+    [0] hourly_active_power (energy, scaled)
+    [1] temp (weather, scaled)
+    [2] feels_like (weather, scaled)
+    [3] humidity (weather, scaled)
+    [4] pressure (weather, scaled)
+    [5] speed (weather, scaled)
+    [6] wind_sin (weather, scaled)
+    [7] wind_cos (weather, scaled)
+
+----------------------------------------------------------------------
+2. TRAINING CONFIGURATION
+----------------------------------------------------------------------
+
+  Optimizer:          Adam
+  Learning rate:      0.001
+  Loss function:      MSELoss (on scaled values)
+  Batch size:         64
+  Max epochs:         50
+  Early stopping:     patience 7
+  Seed:               42
+  Device:             cpu
+
+  Train samples:      3,816
+  Validation samples: 881
+  History length:     168 hours
+  Forecast horizon:   24 hours
+
+----------------------------------------------------------------------
+3. TRAINING RESULTS
+----------------------------------------------------------------------
+
+  Total epochs run:   16
+  Best epoch:         9
+  Best val loss:      0.473350 (MSE, scaled)
+  Training time:      340.7s
+
+  Final train loss:   0.359395
+  Final val loss:     0.512069
+
+----------------------------------------------------------------------
+4. VALIDATION METRICS (in original Watts)
+----------------------------------------------------------------------
+
+  Primary metrics:
+    MAE:              77.47 W
+    RMSE:             102.27 W
+    R^2:               0.3472
+
+  Secondary metrics:
+    MAPE:             36.06%
+    sMAPE:            30.57%
+
+----------------------------------------------------------------------
+5. TEST METRICS -- FINAL EARLY FUSION RESULTS (in original Watts)
+----------------------------------------------------------------------
+
+  Primary metrics:
+    MAE:              71.64 W
+    RMSE:             88.56 W
+    R^2:               0.2169
+
+  Secondary metrics:
+    MAPE:             48.58%
+    sMAPE:            36.48%
+
+----------------------------------------------------------------------
+6. MAPE LOW-VALUE HANDLING
+----------------------------------------------------------------------
+
+  MAPE clamping threshold: 10.0 W
+
+  Rule: When computing MAPE, actual values below the clamping
+  threshold are clamped to the threshold before division.
+  This prevents inflation of percentage errors during hours
+  of very low consumption (e.g., standby power).
+
+  Formula: MAPE = mean(|actual - pred| / max(|actual|, threshold)) x 100
+
+  This rule is applied consistently across all model evaluations
+  in this project.
+
+----------------------------------------------------------------------
+7. DATA INTEGRITY STATEMENT
+----------------------------------------------------------------------
+
+  TRAINING SET (3,816 windows):
+    Used for model parameter optimization.
+
+  VALIDATION SET (881 windows):
+    Used ONLY for early stopping and best checkpoint selection.
+    NOT used for gradient updates.
+
+  CALIBRATION SET (587 windows):
+    COMPLETELY UNTOUCHED in Step 4.2.
+    Not loaded, not evaluated, not used in any way.
+    Reserved for conformal prediction in a later step.
+
+  TEST SET (587 windows):
+    WITHHELD from training and model selection.
+    Evaluated ONCE after the model was fully finalized
+    (best checkpoint restored from validation-based early stopping).
+    Results reported in Section 5 above.
+
+  SCALERS:
+    Energy StandardScaler from Step 3.8 loaded read-only.
+    Mean: 307.1706 W, Std: 147.9934 W.
+    Fitted on training partition only. Never refit or modified.
+    Weather StandardScaler from Step 3.8 applied during Step 3.9 sequencing.
+    Not reloaded or refit in Step 4.2.
+
+----------------------------------------------------------------------
+8. COMPARISON WITH STEP 4.1 ENERGY-ONLY BASELINE
+----------------------------------------------------------------------
+
+  VALIDATION SET:
+    MAE:   77.47 W  vs  77.25 W  Delta = +0.22 (+0.3% ^) (worse)
+    RMSE:  102.27 W  vs  101.22 W  Delta = +1.05 (+1.0% ^) (worse)
+    R^2:    0.3472    vs  0.3605    Delta = -0.01 (-3.7% v) (worse)
+    MAPE:  36.06%   vs  37.97%   Delta = -1.90 (-5.0% v) (better)
+    sMAPE: 30.57%   vs  30.44%   Delta = +0.13 (+0.4% ^) (worse)
+
+  TEST SET:
+    MAE:   71.64 W  vs  77.88 W  Delta = -6.25 (-8.0% v) (better)
+    RMSE:  88.56 W  vs  93.36 W  Delta = -4.80 (-5.1% v) (better)
+    R^2:    0.2169    vs  0.1296    Delta = +0.09 (+67.3% ^) (better)
+    MAPE:  48.58%   vs  56.01%   Delta = -7.43 (-13.3% v) (better)
+    sMAPE: 36.48%   vs  39.39%   Delta = -2.92 (-7.4% v) (better)
+
+  PARAMETER COUNT:
+    Early Fusion: 53,784
+    Energy-Only:  51,992
+    Difference:   +1,792 (+3.45%)
+
+======================================================================
+END OF REPORT
+======================================================================

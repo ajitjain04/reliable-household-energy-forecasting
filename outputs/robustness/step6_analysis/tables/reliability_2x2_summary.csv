@@ -1,0 +1,33 @@
+experiment,model,condition,mae_watts,rel_mae_pct,rmse_watts,r2
+missingness_30,Energy-Only,NN,77.8823,0.0,93.3621,0.129621
+missingness_30,Energy-Only,NA,77.8823,0.0,93.3621,0.129621
+missingness_30,Energy-Only,AN,87.0098,11.72,102.2941,-0.044884
+missingness_30,Energy-Only,AA,87.0098,11.72,102.2941,-0.044884
+missingness_30,Early Fusion,NN,71.636,0.0,88.5589,0.216874
+missingness_30,Early Fusion,NA,71.8103,0.24,88.5591,0.216871
+missingness_30,Early Fusion,AN,75.2,4.98,91.9461,0.155823
+missingness_30,Early Fusion,AA,76.3921,6.64,92.8015,0.140042
+missingness_30,Late Fusion,NN,78.9042,0.0,95.0714,0.097459
+missingness_30,Late Fusion,NA,79.5525,0.82,95.3847,0.091501
+missingness_30,Late Fusion,AN,82.3039,4.31,97.6981,0.046898
+missingness_30,Late Fusion,AA,83.1414,5.37,98.2781,0.035547
+missingness_30,Hybrid Fusion,NN,82.1862,0.0,98.0771,0.039488
+missingness_30,Hybrid Fusion,NA,82.5497,0.44,98.2204,0.036679
+missingness_30,Hybrid Fusion,AN,84.0742,2.3,99.6503,0.008427
+missingness_30,Hybrid Fusion,AA,84.6068,2.95,99.9542,0.00237
+noise_20,Energy-Only,NN,77.8823,0.0,93.3621,0.129621
+noise_20,Energy-Only,NA,77.8823,0.0,93.3621,0.129621
+noise_20,Energy-Only,AN,78.3176,0.56,93.8666,0.120188
+noise_20,Energy-Only,AA,78.3176,0.56,93.8666,0.120188
+noise_20,Early Fusion,NN,71.636,0.0,88.5589,0.216874
+noise_20,Early Fusion,NA,71.7007,0.09,88.6096,0.215978
+noise_20,Early Fusion,AN,71.6433,0.01,88.5478,0.217071
+noise_20,Early Fusion,AA,71.728,0.13,88.6169,0.215848
+noise_20,Late Fusion,NN,78.9042,0.0,95.0714,0.097459
+noise_20,Late Fusion,NA,78.9238,0.02,95.0829,0.09724
+noise_20,Late Fusion,AN,78.9851,0.1,95.1423,0.096111
+noise_20,Late Fusion,AA,79.0048,0.13,95.155,0.09587
+noise_20,Hybrid Fusion,NN,82.1862,0.0,98.0771,0.039488
+noise_20,Hybrid Fusion,NA,82.1912,0.01,98.0799,0.039434
+noise_20,Hybrid Fusion,AN,82.2135,0.03,98.0925,0.039188
+noise_20,Hybrid Fusion,AA,82.2188,0.04,98.0961,0.039117

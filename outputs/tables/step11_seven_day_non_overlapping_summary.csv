@@ -1,0 +1,7 @@
+model,independent_weeks_count,total_evaluated_hours,mae_watts,rmse_watts,r2,smape_pct,mape_pct,delta_mae_vs_persistence_watts,relative_delta_pct
+Persistence,3,504,94.204,128.2595,-0.738991,52.8925,43.5022,0.0,0.0
+Daily Seasonal-Naive,3,504,102.2031,137.6054,-1.001652,53.9907,57.3372,7.9991,8.49
+Weekly Seasonal-Naive,3,504,97.9719,127.8865,-0.728889,48.3891,67.7941,3.7679,4.0
+Energy-Only LSTM (Recursive),3,504,94.299,110.1121,-0.281704,47.0398,74.7282,0.095,0.1
+Early Fusion (Persisted Weather),3,504,84.2845,102.3356,-0.107061,43.3426,59.1667,-9.9195,-10.53
+Early Fusion (Oracle Weather Leakage),3,504,75.5719,91.7111,0.110877,39.6772,54.4793,-18.6321,-19.78

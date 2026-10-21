@@ -1,0 +1,82 @@
+================================================================================
+STEP 9 -- CONFORMAL PREDICTION / UNCERTAINTY QUANTIFICATION AUDIT REPORT
+================================================================================
+Generated: 2026-10-06 18:25:21
+Protocol: Horizon-Wise Absolute-Residual Split Conformal Prediction
+Significance Level: alpha = 0.10 (Nominal Coverage = 90.0%)
+Calibration Partition: N_cal = 587 windows (168h history, 24h horizon)
+Finite-Sample Order Statistic: k = ceil((587+1)*0.90) = 530 (0-indexed rank: 529)
+Test Partition: N_test = 587 rolling windows (14,088 total forecast points)
+
+--------------------------------------------------------------------------------
+1. ARTIFACT & REPRODUCIBILITY AUDIT TABLE
+--------------------------------------------------------------------------------
+Category             Artifact Name                       State / Check          Status
+-------------------------------------------------------------------------------------
+Checkpoint           Model energy_only                   Unchanged              PASS  
+Checkpoint           Model early_fusion                  Unchanged              PASS  
+Checkpoint           Model late_fusion                   Unchanged              PASS  
+Checkpoint           Model hybrid_fusion                 Unchanged              PASS  
+Scaler               scaler_metadata.json                Unchanged              PASS  
+Dataset              train/X_energy.npz                  Unchanged              PASS  
+Dataset              train/X_weather.npz                 Unchanged              PASS  
+Dataset              train/y.npz                         Unchanged              PASS  
+Dataset              validation/X_energy.npz             Unchanged              PASS  
+Dataset              validation/X_weather.npz            Unchanged              PASS  
+Dataset              validation/y.npz                    Unchanged              PASS  
+Dataset              calibration/X_energy.npz            Unchanged              PASS  
+Dataset              calibration/X_weather.npz           Unchanged              PASS  
+Dataset              calibration/y.npz                   Unchanged              PASS  
+Dataset              test/X_energy.npz                   Unchanged              PASS  
+Dataset              test/X_weather.npz                  Unchanged              PASS  
+Dataset              test/y.npz                          Unchanged              PASS  
+Degradation Array    mask_energy_test.npz                Unchanged              PASS  
+Degradation Array    mask_weather_test.npz               Unchanged              PASS  
+Degradation Array    noise_energy_test.npz               Unchanged              PASS  
+Degradation Array    noise_weather_test.npz              Unchanged              PASS  
+Prior Predictions    All 28 Step 4/5A/5B prediction archives Unchanged              PASS  
+Prior Reports        step7_statistical_analysis_report.txt Unchanged              PASS  
+Prior Reports        step8_xai_attribution_report.txt    Unchanged              PASS  
+Numerical Integrity  Zero NaN / Zero Inf across all arrays Verified               PASS  
+Invariance Controls  Energy-Only N-A == N-N and A-A == A-N Exact Match (0.0 W)    PASS  
+Protocol Integrity   Calibration performed strictly on clean calibration partition Verified               PASS  
+Protocol Integrity   Primary intervals unclipped and fixed-width Verified               PASS  
+-------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+2. CALIBRATION INFERENCE & QUANTILE SUMMARY
+--------------------------------------------------------------------------------
+Model: Energy-Only
+  Calibration MAE: 70.22 W | Calibration RMSE: 86.81 W
+  Mean Conformal Quantile (q_h): 133.56 W (Min: 119.35 W, Max: 138.36 W)
+  Mean Primary Interval Width (MPIW): 267.13 W (Min: 238.71 W, Max: 276.73 W)
+
+Model: Early Fusion
+  Calibration MAE: 68.20 W | Calibration RMSE: 85.37 W
+  Mean Conformal Quantile (q_h): 134.13 W (Min: 129.75 W, Max: 139.09 W)
+  Mean Primary Interval Width (MPIW): 268.26 W (Min: 259.51 W, Max: 278.19 W)
+
+Model: Late Fusion
+  Calibration MAE: 76.46 W | Calibration RMSE: 94.69 W
+  Mean Conformal Quantile (q_h): 143.30 W (Min: 129.75 W, Max: 153.20 W)
+  Mean Primary Interval Width (MPIW): 286.60 W (Min: 259.49 W, Max: 306.39 W)
+
+Model: Hybrid Fusion
+  Calibration MAE: 77.34 W | Calibration RMSE: 95.10 W
+  Mean Conformal Quantile (q_h): 142.13 W (Min: 131.49 W, Max: 148.89 W)
+  Mean Primary Interval Width (MPIW): 284.26 W (Min: 262.98 W, Max: 297.78 W)
+
+--------------------------------------------------------------------------------
+3. ENERGY-ONLY INVARIANCE VERIFICATION
+--------------------------------------------------------------------------------
+Missingness Condition N-A vs Clean N-N Max Discrepancy: 0.000025 W [PASS]
+Missingness Condition A-A vs Missingness A-N Max Discrepancy: 0.000000 W [PASS]
+Noise Condition N-A vs Clean N-N Max Discrepancy: 0.000025 W [PASS]
+Noise Condition A-A vs Noise A-N Max Discrepancy: 0.000000 W [PASS]
+
+--------------------------------------------------------------------------------
+4. AUDIT CONCLUSION
+--------------------------------------------------------------------------------
+All pre-execution and post-execution integrity checks passed with zero discrepancies.
+No models were retrained. No existing Step 3-8 artifacts were modified.
+AUDIT STATUS: FULLY COMPLIANT AND VERIFIED.

@@ -1,0 +1,29 @@
+model,model_display,experiment_type,condition,condition_label,nominal_coverage,empirical_coverage_picp,picp_percentage,absolute_coverage_error_ace,ace_percentage,mean_prediction_interval_width_mpiw,mean_winkler_interval_score,undercoverage_rate,overcoverage_rate,clipping_applied,secondary_clipped_picp_percentage,secondary_clipped_mpiw,secondary_clipped_interval_score,secondary_oracle_mpiw_watts
+energy_only,Energy-Only,clean,NN,Clean N-N,0.9,0.863856,86.39,0.036144,3.61,267.126,361.0266,0.084966,0.051178,Raw / Symmetric (Unclipped),86.39,267.126,361.0266,288.1748
+energy_only,Energy-Only,missingness,NA,Missingness NA,0.9,0.863856,86.39,0.036144,3.61,267.126,361.0266,0.084966,0.051178,Raw / Symmetric (Unclipped),86.39,267.126,361.0266,288.1748
+energy_only,Energy-Only,missingness,AN,Missingness AN,0.9,0.799191,79.92,0.100809,10.08,267.126,399.393,0.156019,0.04479,Raw / Symmetric (Unclipped),79.92,267.126,399.393,318.2365
+energy_only,Energy-Only,missingness,AA,Missingness AA,0.9,0.799191,79.92,0.100809,10.08,267.126,399.393,0.156019,0.04479,Raw / Symmetric (Unclipped),79.92,267.126,399.393,318.2365
+energy_only,Energy-Only,noise,NA,Noise NA,0.9,0.863856,86.39,0.036144,3.61,267.126,361.0266,0.084966,0.051178,Raw / Symmetric (Unclipped),86.39,267.126,361.0266,288.1748
+energy_only,Energy-Only,noise,AN,Noise AN,0.9,0.861087,86.11,0.038913,3.89,267.126,363.9959,0.088089,0.050823,Raw / Symmetric (Unclipped),86.11,267.126,363.9959,289.9747
+energy_only,Energy-Only,noise,AA,Noise AA,0.9,0.861087,86.11,0.038913,3.89,267.126,363.9959,0.088089,0.050823,Raw / Symmetric (Unclipped),86.11,267.126,363.9959,289.9747
+early_fusion,Early Fusion,clean,NN,Clean N-N,0.9,0.885647,88.56,0.014353,1.44,268.2557,360.6538,0.051817,0.062535,Raw / Symmetric (Unclipped),88.56,268.2447,360.6428,279.2583
+early_fusion,Early Fusion,missingness,NA,Missingness NA,0.9,0.888629,88.86,0.011371,1.14,268.2557,360.9565,0.050539,0.060832,Raw / Symmetric (Unclipped),88.86,268.2479,360.9488,276.608
+early_fusion,Early Fusion,missingness,AN,Missingness AN,0.9,0.858532,85.85,0.041468,4.15,268.2557,368.1629,0.085676,0.055792,Raw / Symmetric (Unclipped),85.85,268.2549,368.1621,294.8646
+early_fusion,Early Fusion,missingness,AA,Missingness AA,0.9,0.857538,85.75,0.042462,4.25,268.2557,369.8812,0.090716,0.051746,Raw / Symmetric (Unclipped),85.75,268.2557,369.8812,294.6009
+early_fusion,Early Fusion,noise,NA,Noise NA,0.9,0.885363,88.54,0.014637,1.46,268.2557,360.6657,0.051746,0.06289,Raw / Symmetric (Unclipped),88.54,268.2468,360.6569,280.0478
+early_fusion,Early Fusion,noise,AN,Noise AN,0.9,0.884583,88.46,0.015417,1.54,268.2557,360.4708,0.05274,0.062677,Raw / Symmetric (Unclipped),88.46,268.245,360.4601,279.5634
+early_fusion,Early Fusion,noise,AA,Noise AA,0.9,0.885789,88.58,0.014211,1.42,268.2557,360.617,0.051675,0.062535,Raw / Symmetric (Unclipped),88.58,268.2471,360.6084,279.6554
+late_fusion,Late Fusion,clean,NN,Clean N-N,0.9,0.898353,89.84,0.001647,0.16,286.5975,382.9557,0.022714,0.078932,Raw / Symmetric (Unclipped),89.84,286.5975,382.9557,286.5498
+late_fusion,Late Fusion,missingness,NA,Missingness NA,0.9,0.897856,89.79,0.002144,0.21,286.5975,379.9781,0.026051,0.076093,Raw / Symmetric (Unclipped),89.79,286.5975,379.9781,286.7889
+late_fusion,Late Fusion,missingness,AN,Missingness AN,0.9,0.887138,88.71,0.012862,1.29,286.5975,376.287,0.041951,0.070911,Raw / Symmetric (Unclipped),88.71,286.5975,376.287,293.2822
+late_fusion,Late Fusion,missingness,AA,Missingness AA,0.9,0.884157,88.42,0.015843,1.58,286.5975,374.9805,0.047984,0.067859,Raw / Symmetric (Unclipped),88.42,286.5975,374.9805,295.0967
+late_fusion,Late Fusion,noise,NA,Noise NA,0.9,0.89814,89.81,0.00186,0.19,286.5975,382.9541,0.022856,0.079003,Raw / Symmetric (Unclipped),89.81,286.5975,382.9541,286.7648
+late_fusion,Late Fusion,noise,AN,Noise AN,0.9,0.897998,89.8,0.002002,0.2,286.5975,383.0041,0.022927,0.079074,Raw / Symmetric (Unclipped),89.8,286.5975,383.0041,286.9148
+late_fusion,Late Fusion,noise,AA,Noise AA,0.9,0.897927,89.79,0.002073,0.21,286.5975,383.0078,0.023282,0.07879,Raw / Symmetric (Unclipped),89.79,286.5975,383.0078,286.9497
+hybrid_fusion,Hybrid Fusion,clean,NN,Clean N-N,0.9,0.884725,88.47,0.015275,1.53,284.2612,380.7939,0.034355,0.08092,Raw / Symmetric (Unclipped),88.47,284.2612,380.7939,294.1003
+hybrid_fusion,Hybrid Fusion,missingness,NA,Missingness NA,0.9,0.882524,88.25,0.017476,1.75,284.2612,378.8963,0.039395,0.078081,Raw / Symmetric (Unclipped),88.25,284.2612,378.8963,293.9378
+hybrid_fusion,Hybrid Fusion,missingness,AN,Missingness AN,0.9,0.870528,87.05,0.029472,2.95,284.2612,379.2447,0.052953,0.076519,Raw / Symmetric (Unclipped),87.05,284.2612,379.2447,298.653
+hybrid_fusion,Hybrid Fusion,missingness,AA,Missingness AA,0.9,0.868399,86.84,0.031601,3.16,284.2612,378.1032,0.058489,0.073112,Raw / Symmetric (Unclipped),86.84,284.2612,378.1032,299.4728
+hybrid_fusion,Hybrid Fusion,noise,NA,Noise NA,0.9,0.88437,88.44,0.01563,1.56,284.2612,380.8086,0.03471,0.08092,Raw / Symmetric (Unclipped),88.44,284.2612,380.8086,294.1335
+hybrid_fusion,Hybrid Fusion,noise,AN,Noise AN,0.9,0.884015,88.4,0.015985,1.6,284.2612,380.7156,0.034923,0.081062,Raw / Symmetric (Unclipped),88.4,284.2612,380.7156,294.6293
+hybrid_fusion,Hybrid Fusion,noise,AA,Noise AA,0.9,0.884086,88.41,0.015914,1.59,284.2612,380.7415,0.035065,0.080849,Raw / Symmetric (Unclipped),88.41,284.2612,380.7415,294.8901

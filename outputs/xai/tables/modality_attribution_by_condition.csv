@@ -1,0 +1,33 @@
+model,experiment,condition,electricity_share_mean,electricity_share_median,weather_share_mean,weather_share_median,electricity_density_share_mean,weather_density_share_mean
+Energy-Only,missingness,NN,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,missingness,NA,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,missingness,AN,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,missingness,AA,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,noise,NN,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,noise,NA,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,noise,AN,1.0,1.0,0.0,0.0,1.0,0.0
+Energy-Only,noise,AA,1.0,1.0,0.0,0.0,1.0,0.0
+Early Fusion,missingness,NN,0.331,0.3212,0.669,0.6788,0.7622,0.2378
+Early Fusion,missingness,NA,0.4124,0.4155,0.5876,0.5845,0.8206,0.1794
+Early Fusion,missingness,AN,0.2539,0.2437,0.7461,0.7563,0.686,0.314
+Early Fusion,missingness,AA,0.3252,0.3195,0.6748,0.6805,0.7563,0.2437
+Early Fusion,noise,NN,0.331,0.3212,0.669,0.6788,0.7622,0.2378
+Early Fusion,noise,NA,0.3291,0.318,0.6709,0.682,0.7607,0.2393
+Early Fusion,noise,AN,0.3331,0.3261,0.6669,0.6739,0.7644,0.2356
+Early Fusion,noise,AA,0.3312,0.3233,0.6688,0.6767,0.7629,0.2371
+Late Fusion,missingness,NN,0.5327,0.5286,0.4673,0.4714,0.8841,0.1159
+Late Fusion,missingness,NA,0.5815,0.5834,0.4185,0.4166,0.9027,0.0973
+Late Fusion,missingness,AN,0.4448,0.4389,0.5552,0.5611,0.8383,0.1617
+Late Fusion,missingness,AA,0.4932,0.4894,0.5068,0.5106,0.8625,0.1375
+Late Fusion,noise,NN,0.5327,0.5286,0.4673,0.4714,0.8841,0.1159
+Late Fusion,noise,NA,0.5308,0.5276,0.4692,0.4724,0.8833,0.1167
+Late Fusion,noise,AN,0.5348,0.532,0.4652,0.468,0.8849,0.1151
+Late Fusion,noise,AA,0.5329,0.5301,0.4671,0.4699,0.8842,0.1158
+Hybrid Fusion,missingness,NN,0.4519,0.437,0.5481,0.563,0.8461,0.1539
+Hybrid Fusion,missingness,NA,0.5096,0.501,0.4904,0.499,0.8736,0.1264
+Hybrid Fusion,missingness,AN,0.3679,0.3593,0.6321,0.6407,0.7905,0.2095
+Hybrid Fusion,missingness,AA,0.422,0.4137,0.578,0.5863,0.8252,0.1748
+Hybrid Fusion,noise,NN,0.4519,0.437,0.5481,0.563,0.8461,0.1539
+Hybrid Fusion,noise,NA,0.4503,0.4352,0.5497,0.5648,0.8452,0.1548
+Hybrid Fusion,noise,AN,0.4544,0.4441,0.5456,0.5559,0.8474,0.1526
+Hybrid Fusion,noise,AA,0.4527,0.4418,0.5473,0.5582,0.8466,0.1534

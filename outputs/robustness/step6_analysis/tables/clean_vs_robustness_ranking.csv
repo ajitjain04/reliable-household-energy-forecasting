@@ -1,0 +1,5 @@
+rank,clean_best_mae,missingness_most_robust,noise_most_robust
+1,Early Fusion,Hybrid Fusion,Hybrid Fusion
+2,Energy-Only,Late Fusion,Late Fusion
+3,Late Fusion,Early Fusion,Early Fusion
+4,Hybrid Fusion,Energy-Only,Energy-Only

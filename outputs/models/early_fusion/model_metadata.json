@@ -1,0 +1,47 @@
+{
+  "model_name": "EarlyFusionLSTM",
+  "step": "4.2",
+  "architecture": {
+    "input_size": 8,
+    "hidden_size": 64,
+    "num_layers": 2,
+    "dropout": 0.2,
+    "forecast_horizon": 24,
+    "fusion_type": "early_fusion",
+    "fusion_description": "Energy + Weather concatenated at input level"
+  },
+  "exact_trainable_parameters": 53784,
+  "training": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss_function": "MSELoss",
+    "batch_size": 64,
+    "max_epochs": 50,
+    "early_stopping_patience": 7,
+    "seed": 42,
+    "device": "cpu",
+    "total_epochs_run": 16,
+    "best_epoch": 9,
+    "best_val_loss": 0.47335,
+    "training_time_seconds": 340.7
+  },
+  "data": {
+    "train_samples": 3816,
+    "validation_samples": 881,
+    "history_length": 168,
+    "forecast_horizon": 24,
+    "features_used": [
+      "hourly_active_power",
+      "temp",
+      "feels_like",
+      "humidity",
+      "pressure",
+      "speed",
+      "wind_sin",
+      "wind_cos"
+    ],
+    "weather_used": true,
+    "fusion_type": "early_fusion"
+  },
+  "timestamp": "2026-09-23T14:04:50.975946"
+}

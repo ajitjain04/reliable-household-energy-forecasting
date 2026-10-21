@@ -1,0 +1,363 @@
+================================================================================
+STEP 8 — XAI / MODALITY ATTRIBUTION PLAN AND ARCHITECTURE AUDIT
+Reliable Multimodal Household Energy Forecasting Under Degraded Weather Information
+================================================================================
+Document Type: Protocol Specification & Pre-Execution Architecture/Data Audit
+Date: 2026-10-06
+Status: PLANNING AND AUDIT ONLY (No XAI attribution executed yet)
+================================================================================
+
+1. CORE XAI OBJECTIVE & RESEARCH QUESTIONS
+--------------------------------------------------------------------------------
+The purpose of Step 8 is to provide interpretability grounded directly in the
+core project research question:
+
+  "How does each fusion strategy rely on the electricity and weather modalities,
+   and does this reliance change when one or both modalities become unreliable?"
+
+Rather than generic feature-importance analysis, this investigation focuses on:
+  A. Modality-level attribution: Quantifying the relative contribution of the
+     electricity modality (historical power demand) versus the weather modality
+     (7 atmospheric features) across the 168-hour history window.
+  B. Attribution shift under degradation: Determining whether models reallocate
+     reliance between modalities when weather (N–A), electricity (A–N), or both
+     (A–A) are degraded by 30% MCAR missingness or 20% AWGN noise.
+  C. Cross-architectural comparison: Contrasting the modality reliance profiles
+     of Early Fusion (input concatenation), Late Fusion (independent encoders),
+     and Hybrid Fusion (intermediate sequence fusion + joint temporal LSTM).
+  D. Linking attribution to empirical robustness: Investigating whether the
+     empirical degradation patterns discovered in Steps 5, 6, and 7 (e.g. large
+     electricity sensitivity vs minimal weather sensitivity) correspond to
+     the models' internal attribution distributions under clean conditions.
+
+
+2. MODELS TO ANALYZE
+--------------------------------------------------------------------------------
+Four models are included in the experimental scope:
+
+1. Energy-Only (Step 4.1):
+   - Unimodal baseline receiving strictly electricity history (1 feature).
+   - Contains zero weather features.
+   - Role in XAI: Serves as a reference control for the temporal attribution
+     profile of electricity demand and establishes the baseline attribution
+     scale. It is NOT analyzed as a two-modality model.
+
+2. Early Fusion (Step 4.2):
+   - Multimodal model fusing energy and weather at the raw input layer.
+   - Evaluated for 2-modality attribution and degradation reallocation.
+
+3. Late Fusion (Step 4.3):
+   - Multimodal model with separate modality encoders fused at the latent head.
+   - Evaluated for 2-modality attribution and encoder isolation effects.
+
+4. Hybrid Fusion (Step 4.4):
+   - Multimodal model with separate encoders, intermediate timestep-level
+     fusion, and a joint temporal LSTM.
+   - Evaluated for 2-modality attribution across intermediate sequence layers.
+
+
+3. RELIABILITY CONDITIONS TO EVALUATE
+--------------------------------------------------------------------------------
+Each of the three multimodal models will be evaluated across 7 operational regimes:
+
+1. Clean Reference:
+   - N–N: Normal electricity + normal weather (Clean benchmark)
+
+2. Step 5A — 30% MCAR Missingness Regimes:
+   - N–A: Normal electricity + 30% missing weather (imputed with 0.0)
+   - A–N: 30% missing electricity + normal weather
+   - A–A: 30% missing electricity + 30% missing weather
+
+3. Step 5B — 20% Additive Gaussian Noise Regimes:
+   - N–A: Normal electricity + 20% noisy weather (AWGN, eta = 0.20)
+   - A–N: 20% noisy electricity + normal weather
+   - A–A: 20% noisy electricity + 20% noisy weather
+
+The missingness and noise degradation mechanisms are kept strictly separate;
+they are never combined into a single condition.
+
+
+4. ARCHITECTURE AUDIT OF FROZEN CHECKPOINTS
+--------------------------------------------------------------------------------
+A direct code and checkpoint audit was conducted across the source files:
+
+A. Early Fusion (src/models/early_fusion.py):
+   - Checkpoint: outputs/models/early_fusion/best_model.pt (parameter count: 10 tensors)
+   - Input structure: Single tensor of shape (batch, 168, 8).
+     * Index 0: hourly_active_power (Electricity modality)
+     * Indices 1..7: temp, feels_like, humidity, pressure, speed, wind_sin, wind_cos (Weather modality)
+   - Temporal layers: 2-layer LSTM(input_size=8, hidden_size=64, dropout=0.2, batch_first=True).
+   - Fusion: None inside the network. Concatenation occurs at the input dataset level.
+   - Output projection: Takes last timestep hidden state out[:, -1, :] (batch, 64) -> Linear(64, 24).
+
+B. Late Fusion (src/models/late_fusion.py):
+   - Checkpoint: outputs/models/late_fusion/best_model.pt (parameter count: 20 tensors)
+   - Input structure: Dual tensors passed to forward(energy, weather):
+     * energy: (batch, 168, 1)
+     * weather: (batch, 168, 7)
+   - Modality encoders:
+     * energy_encoder: 2-layer LSTM(1, 64, dropout=0.2) -> last hidden rep_e (batch, 64)
+     * weather_encoder: 2-layer LSTM(7, 64, dropout=0.2) -> last hidden rep_w (batch, 64)
+   - Fusion layer: Concatenates representations [rep_e, rep_w] (batch, 128) -> Linear(128, 64) + ReLU.
+   - Output projection: Linear(64, 24) applied to the fused latent representation.
+
+C. Hybrid Fusion (src/models/hybrid_fusion.py):
+   - Checkpoint: outputs/models/hybrid_fusion/best_model.pt (parameter count: 24 tensors)
+   - Input structure: Dual tensors passed to forward(energy, weather):
+     * energy: (batch, 168, 1)
+     * weather: (batch, 168, 7)
+   - Modality encoders:
+     * energy_encoder: 2-layer LSTM(1, 64) -> keeps full sequence out_e (batch, 168, 64)
+     * weather_encoder: 2-layer LSTM(7, 64) -> keeps full sequence out_w (batch, 168, 64)
+   - Intermediate fusion: Concatenates sequences along feature axis (batch, 168, 128)
+     -> Linear(128, 64) + ReLU applied across all 168 timesteps -> (batch, 168, 64).
+   - Joint temporal modeling: 1-layer LSTM(64, 64) over the fused sequence -> takes last state (batch, 64).
+   - Output projection: Linear(64, 24) applied to joint representation.
+
+
+5. XAI METHOD SELECTION & JUSTIFICATION
+--------------------------------------------------------------------------------
+We evaluated four candidate attribution paradigms:
+
+A. Candidate Methods:
+   1. Integrated Gradients (Sundararajan et al., 2017):
+      - Axiomatically justified (satisfies Completeness, Implementation Invariance,
+        Linearity, and Sensitivity).
+      - Integrates gradients along the straight-line path from a baseline x' to input x:
+          IG_i(x) = (x_i - x'_i) * integral_0^1 [ dF(x' + alpha*(x - x')) / dx_i ] d_alpha
+      - Avoids gradient saturation common in deep recurrent networks.
+      - Provides full temporal resolution: attribution tensor of shape (168, F) for each sample.
+
+   2. Gradient x Input (First-order Taylor approximation):
+      - Simple and fast, but can saturate and lacks completeness.
+
+   3. Modality Occlusion / Feature Ablation:
+      - Perturbation-based counterfactual: measures Delta F when a modality is zeroed out.
+      - Useful at the coarse modality level, but computationally expensive for 168 temporal lags.
+
+   4. SHAP (DeepSHAP / KernelSHAP):
+      - DeepSHAP suffers from PyTorch LSTM op compatibility issues.
+      - KernelSHAP is model-agnostic but requires thousands of permutations per sample,
+        making 587 sequence windows computationally intractable on CPU.
+
+B. Method Selection Decision:
+   - PRIMARY METHOD: INTEGRATED GRADIENTS (IG) with m = 20 Riemann summation steps.
+   - VERIFICATION / SECONDARY CHECKS:
+     * Gradient x Input: Computed to verify linear consistency.
+     * Modality Occlusion: Evaluated at the coarse level to verify modality share rankings.
+
+
+6. BASELINE / REFERENCE SELECTION
+--------------------------------------------------------------------------------
+The baseline x' is the foundational reference against which attributions are measured.
+
+Selected Baseline:
+  x' = 0.0 across all features and timesteps in standardised / scaled space.
+
+Justification:
+  1. Statistical Grounding: All features were preprocessed with standardisation
+     (mean = 0, std = 1). A zero vector represents the empirical training mean of
+     household active power (307.17 W) and all weather variables (e.g. 20.8°C temp).
+  2. Protocol Alignment: In the Step 5A missingness experiment, missing values were
+     explicitly imputed with 0.0 in standardised space. Using x' = 0.0 aligns the
+     XAI baseline directly with the uninformative state of the degradation protocol.
+  3. Interpretability: Deviations (x - x') represent deviations from average consumption
+     and average weather conditions.
+
+
+7. ATTRIBUTION TARGET SPECIFICATION
+--------------------------------------------------------------------------------
+The forecasting models predict a 24-dimensional vector: \hat{y} = [\hat{y}_1, ..., \hat{y}_{24}].
+
+Selected Primary Target:
+  Aggregate 24-Hour Forecast Output:
+    S(\hat{y}) = sum_{h=1}^{24} \hat{y}_h
+
+Justification:
+  1. Represents total daily forecasted electricity consumption in scaled space.
+  2. Avoids arbitrary single-horizon cherry-picking.
+  3. Mathematical property: Due to the linearity of gradients:
+       d S(\hat{y}) / dx = sum_{h=1}^{24} [ d \hat{y}_h / dx ]
+     Attribution of the aggregate sum equals the exact sum of attributions across
+     all 24 individual forecast horizons.
+
+Supplementary Horizon-Specific Targets:
+  To investigate whether weather reliance increases at longer forecast horizons,
+  attributions will be derived separately for selected representative lead times:
+    - h = 1  (Immediate 1-hour ahead forecast)
+    - h = 6  (Short-term morning transition)
+    - h = 12 (Mid-day forecast)
+    - h = 24 (Full-day ahead forecast)
+
+
+8. MODALITY AGGREGATION & NORMALIZATION
+--------------------------------------------------------------------------------
+For sample i, IG produces attribution tensor A(i, t, f) of shape (168, F).
+
+A. Modality Sums:
+   - Electricity magnitude:
+       |A_energy(i)| = sum_{t=1}^{168} |A(i, t, 0)|
+   - Weather magnitude:
+       |A_weather(i)| = sum_{t=1}^{168} sum_{f=1}^{7} |A(i, t, f)|
+
+B. Metric 1: Total Modality Attribution Share:
+   - Reflects total information flow into the model:
+       Share_energy(i)  = |A_energy(i)|  / ( |A_energy(i)| + |A_weather(i)| )
+       Share_weather(i) = |A_weather(i)| / ( |A_energy(i)| + |A_weather(i)| )
+   - Verified property: Share_energy + Share_weather = 1.0 (100%).
+
+C. Metric 2: Dimensionality-Normalized Attribution Density:
+   - Accounts for the feature asymmetry (1 energy feature vs 7 weather features):
+       Density_energy(i)  = |A_energy(i)|  / (1 * 168)
+       Density_weather(i) = |A_weather(i)| / (7 * 168)
+       Density_Share_energy(i)  = Density_energy(i)  / ( Density_energy(i) + Density_weather(i) )
+       Density_Share_weather(i) = Density_weather(i) / ( Density_energy(i) + Density_weather(i) )
+   - Measures attribution per feature channel.
+
+
+9. TEMPORAL DIMENSION & LAG AGGREGATION
+--------------------------------------------------------------------------------
+The 168 historical hours (7 days) will be analyzed across two views:
+
+A. Full Continuous Lag Curve:
+   - For each lag t in {1, ..., 168} (where t=168 is the most recent observation t-0,
+     and t=1 is 7 days prior t-167):
+       T_energy(t)  = (1 / N) * sum_{i=1}^N |A_energy(i, t)|
+       T_weather(t) = (1 / N) * sum_{i=1}^N sum_{f=1}^7 |A_weather(i, t, f)|
+
+B. Standardized Temporal Bins:
+   - Recent History (0–23h lag / Day -1): Timesteps t in [145, 168] (past 24h).
+   - Intermediate History (24–71h lag / Days -2 to -3): Timesteps t in [97, 144] (prior 48h).
+   - Distant History (72–167h lag / Days -4 to -7): Timesteps t in [1, 96] (prior 96h).
+   - This determines whether recurrent states decay historical memory or preserve
+     weekly periodic patterns.
+
+
+10. WEATHER FEATURE ATTRIBUTION BREAKDOWN
+--------------------------------------------------------------------------------
+The 7 causal weather features will be analyzed individually:
+  1. temp
+  2. feels_like
+  3. humidity
+  4. pressure
+  5. speed
+  6. wind_sin
+  7. wind_cos
+
+Features explicitly excluded:
+  - Non-causal or leak-prone features (temp_t+1, feels_like_t+1, temp_min, temp_max,
+    text descriptions).
+
+Metrics per weather feature:
+  - Mean absolute attribution: (1 / N) * sum_i sum_t |A(i, t, f)|
+  - Within-weather percentage share: sum_t |A(t, f)| / sum_{f'} sum_t |A(t, f')|
+  - Feature ranking across models and conditions.
+
+
+11. CONDITION COMPARISON & ATTRIBUTION SHIFT PROTOCOL
+--------------------------------------------------------------------------------
+To test whether models reallocate reliance when inputs degrade:
+
+For each model M and condition C in {NA, AN, AA}:
+  - Delta Share_energy(M, C)  = Share_energy(M, C)  - Share_energy(M, NN)
+  - Delta Share_weather(M, C) = Share_weather(M, C) - Share_weather(M, NN)
+
+Key Research Hypotheses to Test:
+  1. When weather is degraded (N–A), does weather attribution drop and shift toward energy?
+  2. When electricity is degraded (A–N), does electricity attribution drop and shift toward weather?
+  3. When both are degraded (A–A), does the relative share reflect the clean distribution or a collapsed state?
+
+Neutral Reporting Language:
+  Use "attribution share shifted by Delta percentage points", avoiding claims of
+  "active cognitive adaptation" unless architectural mechanisms explicitly demonstrate it.
+
+
+12. LINKING XAI TO EMPIRICAL RELIABILITY FINDINGS
+--------------------------------------------------------------------------------
+XAI results will be directly cross-referenced against Steps 5, 6, and 7:
+
+  - Finding in Step 7: Electricity missingness degraded MAE by +1.89 W to +9.13 W
+    (p < 1e-15), while weather missingness had minimal impact (<= +0.65 W, and p = 0.5604
+    for Early Fusion).
+  - Hypothesis: Clean models exhibit overwhelming electricity attribution dominance
+    (Share_energy >> Share_weather).
+  - Robustness ranking comparison:
+    Hybrid Fusion showed the lowest relative degradation (+2.95% vs +6.64% for Early Fusion).
+    Does Hybrid Fusion exhibit a fundamentally different modality attribution balance
+    due to its separate encoders and intermediate fusion layer?
+
+
+13. COMPUTATIONAL FEASIBILITY & SAMPLE SIZE
+--------------------------------------------------------------------------------
+Empirical benchmarking on CPU with PyTorch confirmed:
+  - Gradient x Input: 0.92 seconds for all 587 samples.
+  - Integrated Gradients (m = 20 steps): ~32 seconds for all 587 samples.
+  - Modality Occlusion: 0.80 seconds for all 587 samples.
+
+Total computational load:
+  - 3 multimodal models x 7 conditions = 21 experimental evaluations.
+  - 21 evaluations x 32 seconds ≈ 11 minutes total runtime on CPU.
+
+Decision:
+  NO SUBSAMPLING IS REQUIRED.
+  The full test partition of ALL 587 sliding windows will be evaluated for complete
+  statistical power and exact pairing with Steps 5, 6, and 7.
+
+
+14. PLANNED VISUALIZATIONS (outputs/xai/figures/)
+--------------------------------------------------------------------------------
+Seven standardized figures will be produced:
+
+  Figure 1: Early Fusion clean N–N modality attribution share & temporal curve.
+  Figure 2: Late Fusion clean N–N modality attribution share & temporal curve.
+  Figure 3: Hybrid Fusion clean N–N modality attribution share & temporal curve.
+  Figure 4: Modality attribution shifts across conditions (N–N, N–A, A–N, A–A)
+            for Missingness and Noise.
+  Figure 5: Electricity temporal attribution profile across 168 historical hours (all 3 models).
+  Figure 6: Weather feature attribution ranking (7 features across models).
+  Figure 7: Weather attribution share vs empirical degradation rate (linking XAI to robustness).
+
+
+15. PLANNED OUTPUT TABLES (outputs/xai/tables/)
+--------------------------------------------------------------------------------
+Five CSV tables will be produced:
+
+  1. modality_attribution_summary.csv:
+     Model, condition, mean electricity share, mean weather share, density shares, std.
+  2. modality_attribution_by_condition.csv:
+     Per-condition breakdown across N–N, N–A, A–N, A–A for missingness and noise.
+  3. weather_feature_attribution.csv:
+     Attribution magnitude and rank for each of the 7 weather features.
+  4. electricity_temporal_attribution.csv:
+     Attribution breakdown across Recent (0-23h), Intermediate (24-71h), and Distant (72-167h) bins.
+  5. attribution_shift_summary.csv:
+     Delta Share_energy and Delta Share_weather relative to clean N–N.
+
+
+16. METHODOLOGICAL LIMITATIONS
+--------------------------------------------------------------------------------
+1. Attribution is model-dependent and reflects internal feature weighting, not causal reality.
+2. Baseline sensitivity: Results are conditioned on the zero-mean baseline (x' = 0).
+3. Collinearity: Weather variables (e.g. temp and feels_like) are correlated, which can
+   distribute attribution across redundant channels.
+4. Feature dimensionality asymmetry: 1 energy feature vs 7 weather features. Reporting
+   both total share and normalized density is required to prevent misleading claims.
+5. Single household dataset: Findings characterize this specific residential profile.
+
+
+17. EXACT IMPLEMENTATION PROCEDURE
+--------------------------------------------------------------------------------
+When approved, execution will run via:
+  python src/analysis/run_xai_attribution.py
+
+The implementation script will:
+  1. Load frozen model checkpoints (Early, Late, Hybrid Fusion) in eval() mode.
+  2. Load test sequences (587 windows x 168 hours).
+  3. Generate degraded inputs deterministically for missingness (seed 42/1042) and noise (seed 42/1042).
+  4. Execute Integrated Gradients (m = 20 steps, baseline x'=0) targeting aggregate forecast sum.
+  5. Compute modality shares, density shares, temporal bins, and weather rankings.
+  6. Compute attribution shift deltas relative to N–N.
+  7. Generate all 5 CSV tables in outputs/xai/tables/.
+  8. Generate all 7 figures in outputs/xai/figures/.
+  9. Produce outputs/reports/step8_xai_attribution_report.txt.
+================================================================================

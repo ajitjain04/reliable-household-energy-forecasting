@@ -1,0 +1,70 @@
+STEP 3.7 CHRONOLOGICAL SPLIT REPORT
+====================================
+
+Total Forecasting Windows: 5,871
+
+PARTITION COUNTS & PROPORTIONS:
+------------------------------------
+  TRAIN       : 3,816 windows ( 65.00%)
+  VALIDATION  :   881 windows ( 15.01%)
+  CALIBRATION :   587 windows ( 10.00%)
+  TEST        :   587 windows ( 10.00%)
+
+TEMPORAL BOUNDARIES PER PARTITION:
+------------------------------------
+[TRAIN]
+  Earliest Forecast Origin : 2022-12-09 09:00:00
+  Latest Forecast Origin   : 2023-09-22 15:00:00
+  Earliest History Start   : 2022-12-02 10:00:00
+  Latest History End       : 2023-09-22 15:00:00
+  Earliest Target Start    : 2022-12-09 10:00:00
+  Latest Target End        : 2023-09-23 15:00:00
+
+[VALIDATION]
+  Earliest Forecast Origin : 2023-09-22 16:00:00
+  Latest Forecast Origin   : 2023-11-14 02:00:00
+  Earliest History Start   : 2023-09-15 17:00:00
+  Latest History End       : 2023-11-14 02:00:00
+  Earliest Target Start    : 2023-09-22 17:00:00
+  Latest Target End        : 2023-11-15 02:00:00
+
+[CALIBRATION]
+  Earliest Forecast Origin : 2023-11-14 03:00:00
+  Latest Forecast Origin   : 2023-12-08 13:00:00
+  Earliest History Start   : 2023-11-07 04:00:00
+  Latest History End       : 2023-12-08 13:00:00
+  Earliest Target Start    : 2023-11-14 04:00:00
+  Latest Target End        : 2023-12-09 13:00:00
+
+[TEST]
+  Earliest Forecast Origin : 2023-12-08 14:00:00
+  Latest Forecast Origin   : 2024-01-02 00:00:00
+  Earliest History Start   : 2023-12-01 15:00:00
+  Latest History End       : 2024-01-02 00:00:00
+  Earliest Target Start    : 2023-12-08 15:00:00
+  Latest Target End        : 2024-01-03 00:00:00
+
+CHRONOLOGICAL ORDERING AUDIT:
+------------------------------------
+  Train max origin < Val min origin  : True (PASS)
+  Val max origin < Cal min origin    : True (PASS)
+  Cal max origin < Test min origin   : True (PASS)
+
+WINDOW OVERLAP AUDIT AT BOUNDARIES:
+------------------------------------
+  Val history overlaps Train target  : True
+    Val min history: 2023-09-15 17:00:00 | Train max target: 2023-09-23 15:00:00
+  Cal history overlaps Val target    : True
+    Cal min history: 2023-11-07 04:00:00 | Val max target: 2023-11-15 02:00:00
+  Test history overlaps Cal target   : True
+    Test min history: 2023-12-01 15:00:00 | Cal max target: 2023-12-09 13:00:00
+
+CRITICAL LEAKAGE AUDIT:
+------------------------------------
+  Test target leaks into Train?      : False (PASS - ZERO leakage)
+  Test target leaks into Val?        : False (PASS - ZERO leakage)
+  Duplicate window IDs across splits : False (PASS - 100% disjoint)
+  Random shuffling used              : False (PASS - strictly chronological)
+  Scaling applied                    : False (PASS - no scaling in Step 3.7)
+
+CONCLUSION: Chronological partition integrity verified successfully.

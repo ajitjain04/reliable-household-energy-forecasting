@@ -1,0 +1,184 @@
+STEP 11 RESEARCH FEASIBILITY REPORT: SEVEN-DAY HOUSEHOLD ENERGY FORECASTING
+================================================================================
+Generated: 2026-10-21 12:22:50
+Investigation: Feasibility of 7-Day (168-Hour) Multimodal Household Energy Forecasting
+Repository: E:\reliable-household-energy-forecasting
+Audited by: Automated Research Agent (Pair Programming Partner)
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY & DECISION
+--------------------------------------------------------------------------------
+CAN THE EXISTING PIPELINE CURRENTLY SUPPORT A DEPLOYABLE 7-DAY FORECAST?
+ANSWER: NO.
+A seven-day (168-hour) energy prediction feature MUST NOT be deployed to the
+application or claimed as reliable at this stage.
+
+PRIMARY REASONS:
+1. ARCHITECTURAL LIMITATION:
+   All four existing trained neural networks (Energy-Only, Early Fusion,
+   Late Fusion, Hybrid Fusion) are hardcoded with a final linear layer
+   nn.Linear(64, 24) that produces exactly 24 outputs. They CANNOT produce
+   168 future values in a single forward pass.
+2. RECURSIVE COMPOUNDING ERROR:
+   When the 24-hour Energy-Only model is rolled forward autoregressively for
+   7 consecutive steps (24h x 7 = 168h), error compounds severely:
+   - Day 1 MAE:  82.83 W (comparable to baseline 24h performance)
+   - Day 4 MAE: 110.81 W (+33.8% degradation)
+   - Day 5 MAE: 111.42 W (+34.5% degradation)
+   - Overall 7-Day MAE: 104.01 W, RMSE: 120.57 W, R² = -0.4500 (predicts worse
+     than the historical mean).
+3. WEATHER AVAILABILITY BARRIER & ORACLE LEAKAGE:
+   The repository contains ZERO archived numerical weather predictions (NWP).
+   Multimodal models (Early/Late/Hybrid Fusion) require 7 weather features
+   for every step of their 168-hour lookback. If rolled forward past 24 hours,
+   any model that uses actual observed future weather incurs FATAL ORACLE LEAKAGE.
+   Our empirical test proves that using oracle weather inflates performance by
+   7.74 W MAE (83.26 W vs 91.00 W), creating an illusion of accuracy that is
+   unachievable in real deployment.
+4. EXTREME DATA SPARSITY FOR 7-DAY VALIDATION:
+   A 7-day forecast requires a continuous 336-hour window (168h lookback + 168h
+   forecast target) without missing data. Across the entire 14-month dataset,
+   there are ONLY 11 continuous valid runs of this length. In the chronological
+   10% test partition, there are ONLY 3 non-overlapping 7-day cycles (504 hours).
+   Evaluating statistical significance or claiming generalizability on 3 samples
+   is scientifically unsupportable.
+
+--------------------------------------------------------------------------------
+2. REPOSITORY & DATA PIPELINE AUDIT (PHASE 1)
+--------------------------------------------------------------------------------
+- Raw Dataset: data/raw/energy_weather_raw_data.csv (76,799,474 bytes)
+- Interim Dataset: data/interim/forecast_ready_hourly.csv (1,601,478 bytes)
+- Temporal Resolution: Cleaned hourly aggregate (requiring >= 90% minute coverage).
+- Temporal Span: 2022-11-05 14:00:00 to 2024-01-05 23:00:00 (10,234 hourly rows, ~14 months).
+- Missingness & Quality: 10,043 valid hours (98.13%), 191 invalid hours (1.87%), 50 null rows.
+- Target Variable: 'hourly_active_power' (Watts, continuous float).
+- Feature Modalities:
+  * Energy: hourly_active_power
+  * Weather: temp, feels_like, humidity, pressure, speed, wind_sin, wind_cos
+  * Strictly Excluded: temp_t+1, feels_like_t+1, temp_min, temp_max, main, description,
+    current, voltage, reactive_power, apparent_power, power_factor.
+- Timestamp Alignment: Synchronously recorded at 1-minute resolution, floored to hour,
+  arithmetic mean for energy/weather, trigonometric circular decomposition for wind direction.
+- Preprocessing Scalers: StandardScaler instances fitted strictly on training data
+  (mean=307.17 W, std=147.99 W). Validation, calibration, and test sets are transformed
+  without refitting.
+
+--------------------------------------------------------------------------------
+3. LEAKAGE AUDIT & ROLLING WINDOW OVERLAP DYNAMICS (PHASE 2)
+--------------------------------------------------------------------------------
+- In the existing 24-hour setup, consecutive sliding windows with stride 1 hour
+  were divided by index into 65% Train, 15% Val, 10% Cal, and 10% Test.
+- Because no embargo buffer was placed between splits:
+  * The last train window target extends 24 hours past the first validation origin.
+  * In a 7-day horizon, this window overlap leakage explodes: the last train target
+    extends 168 hours (7 full days) into the validation period, overlapping 167
+    validation window targets.
+- For a leakage-safe 7-day evaluation, either:
+  a) An embargo buffer >= 168 hours must be applied at partition boundaries, or
+  b) Predictions must be evaluated on non-overlapping forecast cycles.
+- Non-Overlapping Reality:
+  The 10% test split contains exactly 3 non-overlapping 7-day weeks:
+    Week 1: Origin 2023-12-10 05:00:00 -> Target 2023-12-10 06:00 to 2023-12-17 05:00
+    Week 2: Origin 2023-12-17 05:00:00 -> Target 2023-12-17 06:00 to 2023-12-24 05:00
+    Week 3: Origin 2023-12-24 05:00:00 -> Target 2023-12-24 06:00 to 2023-12-31 05:00
+
+--------------------------------------------------------------------------------
+4. WEATHER AVAILABILITY & MODALITY INTEGRITY (PHASE 3)
+--------------------------------------------------------------------------------
+- The repository contains NO archived weather forecasts.
+- The weather measurements in forecast_ready_hourly.csv are historical ground observations.
+- In the validated 24-hour research setup, models only accept historical weather (t-167 to t).
+- In a 7-day recursive rollout, future weather across t+1 to t+168 is UNKNOWN at origin t.
+- Two scenarios were rigorously tested:
+  Scenario A (Deployable Proxy): Persisted weather (repeating the last known 24h weather).
+  Scenario B (Oracle Leakage): Feeding actual observed weather as the lookback rolls forward.
+- Result: Oracle weather provides an artificial 7.74 W MAE advantage on sliding windows
+  and 8.71 W on non-overlapping windows. Any claim that multimodal models achieve ~83W MAE
+  over 7 days without genuine NWP weather forecasts is invalid and unscientific.
+
+--------------------------------------------------------------------------------
+5. EMPIRICAL BENCHMARK EVALUATION (PHASE 4)
+--------------------------------------------------------------------------------
+Evaluated across all 404 test windows (168h horizon):
+---------------------------------------------------------------------------------------------------------
+Model / Baseline                                 | MAE (W)  | RMSE (W) | R²       | sMAPE (%) | MAPE (%)
+---------------------------------------------------------------------------------------------------------
+1. Last-Value Persistence                        | 111.48   | 142.76   | -1.0330  | 57.48%    | 52.48%
+2. Daily Seasonal-Naive (24h lag x 7)            | 107.60   | 139.32   | -0.9362  | 56.06%    | 49.62%
+3. Weekly Seasonal-Naive (168h lag)              |  99.85   | 130.76   | -0.7054  | 50.78%    | 43.14%
+4. Energy-Only LSTM (Recursive 24h Rollout)      | 104.01   | 120.57   | -0.4500  | 51.93%    | 45.31%
+5. Early Fusion (Recursive, Persisted Weather)   |  91.00   | 108.87   | -0.1822  | 47.15%    | 40.54%
+6. Early Fusion (Recursive, Oracle Weather Leak) |  83.26   |  99.96   |  0.0034  | 44.07%    | 36.63%
+---------------------------------------------------------------------------------------------------------
+
+Evaluated across the 3 strictly NON-OVERLAPPING 7-day test cycles (504 hours):
+---------------------------------------------------------------------------------------------------------
+Model / Baseline                                 | MAE (W)  | RMSE (W) | R²       | sMAPE (%) | MAPE (%)
+---------------------------------------------------------------------------------------------------------
+1. Last-Value Persistence                        |  94.20   | 128.26   | -0.7390  | 52.89%    | 40.91%
+2. Daily Seasonal-Naive (24h lag x 7)            | 102.20   | 137.61   | -1.0017  | 53.99%    | 43.12%
+3. Weekly Seasonal-Naive (168h lag)              |  97.97   | 127.89   | -0.7289  | 48.39%    | 39.88%
+4. Energy-Only LSTM (Recursive 24h Rollout)      |  94.30   | 110.11   | -0.2817  | 47.04%    | 38.65%
+5. Early Fusion (Recursive, Persisted Weather)   |  84.28   | 102.34   | -0.1071  | 43.34%    | 35.79%
+6. Early Fusion (Recursive, Oracle Weather Leak) |  75.57   |  91.71   |  0.1109  | 39.68%    | 31.70%
+---------------------------------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+6. HORIZON-WISE ERROR GROWTH (DAY 1 TO DAY 7)
+--------------------------------------------------------------------------------
+Mean Absolute Error (Watts) by forecast day across all test windows:
+---------------------------------------------------------------------------------------------------------
+Model                                            | Day 1   | Day 2   | Day 3   | Day 4   | Day 5   | Day 6   | Day 7
+---------------------------------------------------------------------------------------------------------
+1. Last-Value Persistence                        |  80.79W |  94.57W | 110.24W | 125.87W | 127.57W | 124.26W | 117.06W
+2. Daily Seasonal-Naive (24h lag x 7)            |  76.34W |  94.57W | 112.56W | 128.10W | 119.73W | 116.87W | 105.04W
+3. Weekly Seasonal-Naive (168h lag)              |  95.12W |  94.52W |  94.95W |  99.82W | 103.12W | 106.37W | 105.04W
+4. Energy-Only LSTM (Recursive 24h Rollout)      |  82.83W |  98.31W | 105.16W | 110.81W | 111.42W | 111.30W | 108.25W
+5. Early Fusion (Recursive, Persisted Weather)   |  74.25W |  84.94W |  90.23W |  95.35W |  97.72W |  99.40W |  95.09W
+6. Early Fusion (Recursive, Oracle Weather Leak) |  74.25W |  82.95W |  85.66W |  86.89W |  85.39W |  85.70W |  81.95W
+---------------------------------------------------------------------------------------------------------
+
+CRITICAL OBSERVATIONS:
+- Compounding Decay: Recursive rollout starts at 82.83 W on Day 1 but degrades to 111.42 W by Day 5 (+34.5%).
+- Weekly Seasonal Stability: Weekly seasonal-naive has higher initial error on Day 1 (95.12 W) but remains
+  flat through Day 7 (105.04 W), beating the daily seasonal-naive by Day 4.
+- Negative R²: All deployable models have R² < 0 over the 168-hour horizon, indicating that variance
+  unexplained exceeds the total variance of the test targets.
+
+--------------------------------------------------------------------------------
+7. REQUIREMENTS FOR A DEDICATED DIRECT 168-HOUR MODEL (PHASE 5 PROTOCOL)
+--------------------------------------------------------------------------------
+To build an authentic seven-day forecasting model rather than recursive rollout:
+1. Architecture:
+   - Direct multi-horizon seq2seq or direct MLP projection: nn.Linear(hidden_size, 168).
+   - Alternatively, a temporal encoder-decoder (e.g. PatchTST, Informer, or DLinear) with
+     336-hour context and 168-hour direct prediction head.
+2. Training Protocol:
+   - Loss function: Multi-horizon MSE over 168 steps.
+   - Batch size: 32 or 64.
+   - Training windows: 2,625 sequences of length 336.
+   - Validation windows: 606 sequences.
+3. Compute & Runtime Estimation:
+   - Approximate parameters: ~65,000 to ~95,000 parameters.
+   - Training time on CPU: ~25 to ~35 minutes for 50 epochs with early stopping.
+4. Proposed New Artifact Paths (Zero impact on existing 24h models):
+   - configs/seven_day_config.yaml
+   - outputs/models/seven_day/energy_only_168h/best_model.pt
+   - outputs/models/seven_day/early_fusion_168h/best_model.pt
+   - outputs/predictions/seven_day/
+5. Prerequisites Before Training:
+   - Acquire or integrate external NWP numerical weather forecasts (e.g., Open-Meteo or IMD)
+     covering the historical evaluation period to support genuine multimodal forecasting.
+   - Secure explicit user approval before launching training.
+
+--------------------------------------------------------------------------------
+8. FINAL CONCLUSION & RECOMMENDATION
+--------------------------------------------------------------------------------
+1. DO NOT claim 7-day forecasting is currently supported or reliable.
+2. DO NOT deploy 7-day predictions to the household user interface.
+3. RETAIN the authoritative 24-hour multimodal models (Step 4 & Step 10), which
+   demonstrate proven statistical reliability (71.64 W MAE, R² = 0.2169).
+4. For extended planning in the product, maintain the monthly bill-triggered
+   planning horizon (Task 2.7B), which operates on confirmed physical billing records
+   and avoids hourly recursive compounding degradation.
+================================================================================

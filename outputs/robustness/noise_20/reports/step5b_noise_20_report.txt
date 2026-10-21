@@ -1,0 +1,134 @@
+================================================================================
+STEP 5B — CONTROLLED 20% ADDITIVE GAUSSIAN NOISE EXPERIMENT REPORT
+Reliable Multimodal Household Energy Forecasting
+================================================================================
+
+Generated: 2026-10-06 13:47:53
+
+--------------------------------------------------------------------------------
+1. EXPERIMENTAL OBJECTIVE
+--------------------------------------------------------------------------------
+  Research question: How does multimodal household energy forecasting
+  behave when one or both input modalities experience measurement noise,
+  and how do different fusion strategies respond to these conditions?
+
+--------------------------------------------------------------------------------
+2. NOISE MODEL & SEVERITY DEFINITION
+--------------------------------------------------------------------------------
+  Model:                 Zero-mean Additive White Gaussian Noise (AWGN)
+  Equation:              x_noisy = x + ε,  ε ~ N(0, η²)
+  Severity (η):          0.20 (20% relative noise standard deviation)
+  Domain:                Standardized / scaled space (unit-variance scaling)
+  Physical interpretation: Corresponds to noise with standard deviation
+                         equal to 20% of training standard deviation for
+                         each feature in original physical units.
+                         (e.g., active power noise std ≈ 29.6 W).
+  Clipping:              No clipping applied (preserves Gaussian purity)
+  Wind direction:        Independent AWGN on wind_sin and wind_cos channels
+
+--------------------------------------------------------------------------------
+3. RANDOM SEEDS & GENERATION
+--------------------------------------------------------------------------------
+  Electricity seed:      42
+  Weather seed:          1042
+  Generation:            Generated ONCE, verified, and shared across all models
+  Array shapes:          Electricity (587, 168, 1), Weather (587, 168, 7)
+
+--------------------------------------------------------------------------------
+4. TEST PARTITION & TARGET PRESERVATION
+--------------------------------------------------------------------------------
+  Test windows:          587
+  History length:        168 hours
+  Forecast horizon:      24 hours
+  Target modified:       NO (identical across all conditions)
+
+--------------------------------------------------------------------------------
+5. AUDIT STATUS
+--------------------------------------------------------------------------------
+  [PASS] Noise array shapes match test sequences
+  [PASS] Noise arrays contain no NaN or Inf values
+  [PASS] Empirical noise statistics verified (mean ≈ 0, std ≈ 0.20)
+  [PASS] N–A electricity input equals clean electricity exactly
+  [PASS] A–N weather input equals clean weather exactly
+  [PASS] Targets strictly identical across N–N, N–A, A–N, A–A
+  [PASS] Clean test sequences preserved (SHA-256 verified)
+  [PASS] Model checkpoints preserved (read-only eval)
+  [PASS] Scalers preserved (read-only)
+  [PASS] Train, validation, calibration splits untouched
+  [PASS] Energy-only N–A == N–N control verified (diff = 0.0 W)
+  [PASS] Energy-only A–A == A–N control verified (diff = 0.0 W)
+  [PASS] No future weather variables introduced
+  [PASS] Zero retraining occurred
+  [PASS] Step 5A missingness artifacts untouched
+
+--------------------------------------------------------------------------------
+6. COMPLETE RESULTS: 4 MODELS × 4 CONDITIONS
+--------------------------------------------------------------------------------
+  Model            Condition    MAE(W)   RMSE(W)         R²    MAPE%   sMAPE%
+  ------------------------------------------------------------------------
+  Energy-Only      NN         77.88     93.36   0.129621    56.01    39.39
+  Energy-Only      NA         77.88     93.36   0.129621    56.01    39.39
+  Energy-Only      AN         78.32     93.87   0.120188    56.33    39.56
+  Energy-Only      AA         78.32     93.87   0.120188    56.33    39.56
+
+  Early Fusion     NN         71.64     88.56   0.216874    48.58    36.48
+  Early Fusion     NA         71.70     88.61   0.215978    48.65    36.51
+  Early Fusion     AN         71.64     88.55   0.217071    48.54    36.49
+  Early Fusion     AA         71.73     88.62   0.215848    48.63    36.53
+
+  Late Fusion      NN         78.90     95.07   0.097459    52.46    39.92
+  Late Fusion      NA         78.92     95.08   0.097240    52.48    39.93
+  Late Fusion      AN         78.99     95.14   0.096111    52.54    39.95
+  Late Fusion      AA         79.00     95.16   0.095870    52.56    39.96
+
+  Hybrid Fusion    NN         82.19     98.08   0.039488    56.35    41.39
+  Hybrid Fusion    NA         82.19     98.08   0.039434    56.35    41.39
+  Hybrid Fusion    AN         82.21     98.09   0.039188    56.38    41.40
+  Hybrid Fusion    AA         82.22     98.10   0.039117    56.39    41.40
+
+--------------------------------------------------------------------------------
+7. ROBUSTNESS DEGRADATION RELATIVE TO N–N CLEAN BASELINE
+--------------------------------------------------------------------------------
+  Model            Condition   ΔMAE(W)     ΔMAE%  ΔRMSE(W)    ΔRMSE%          ΔR²
+  ---------------------------------------------------------------------------
+  Energy-Only      NA         +0.00     +0.0%     +0.00     +0.0%    +0.000000
+  Energy-Only      AN         +0.44     +0.6%     +0.50     +0.5%    -0.009433
+  Energy-Only      AA         +0.44     +0.6%     +0.50     +0.5%    -0.009433
+
+  Early Fusion     NA         +0.06     +0.1%     +0.05     +0.1%    -0.000896
+  Early Fusion     AN         +0.01     +0.0%     -0.01     -0.0%    +0.000197
+  Early Fusion     AA         +0.09     +0.1%     +0.06     +0.1%    -0.001026
+
+  Late Fusion      NA         +0.02     +0.0%     +0.01     +0.0%    -0.000219
+  Late Fusion      AN         +0.08     +0.1%     +0.07     +0.1%    -0.001348
+  Late Fusion      AA         +0.10     +0.1%     +0.08     +0.1%    -0.001589
+
+  Hybrid Fusion    NA         +0.01     +0.0%     +0.00     +0.0%    -0.000054
+  Hybrid Fusion    AN         +0.03     +0.0%     +0.02     +0.0%    -0.000300
+  Hybrid Fusion    AA         +0.03     +0.0%     +0.02     +0.0%    -0.000371
+
+--------------------------------------------------------------------------------
+8. ENERGY-ONLY CONTROLS
+--------------------------------------------------------------------------------
+  Control 1: Energy-only N–A predictions == Energy-only N–N predictions.
+  Result: PASSED (max absolute diff = 0.0 W).
+  Verification: Energy-only model ignores weather, confirming no cross-talk.
+
+  Control 2: Energy-only A–A predictions == Energy-only A–N predictions.
+  Result: PASSED (max absolute diff = 0.0 W).
+  Verification: Weather degradation in A–A does not affect Energy-only.
+
+--------------------------------------------------------------------------------
+9. SCIENTIFIC OBSERVATIONS & LIMITATIONS
+--------------------------------------------------------------------------------
+  Under the 20% additive Gaussian noise condition evaluated:
+  - Observations are strictly sample comparisons for this experimental setup.
+  - Independent white Gaussian noise does not model temporal correlation
+    or sensor calibration drift.
+  - Wind directional features experience independent linear perturbation
+    without re-projection onto the unit circle.
+  - No claims of causal dominance or statistical significance are made.
+
+================================================================================
+END OF STEP 5B REPORT
+================================================================================

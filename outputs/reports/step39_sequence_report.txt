@@ -1,0 +1,108 @@
+STEP 3.9 MODEL-READY SEQUENCE AUDIT REPORT
+==========================================
+
+1. INPUT FILES USED:
+--------------------
+  - Windows: data/interim/splits/train_windows.csv
+  - Scaled:  data/processed/scaled/train_scaled.csv
+  - Windows: data/interim/splits/validation_windows.csv
+  - Scaled:  data/processed/scaled/validation_scaled.csv
+  - Windows: data/interim/splits/calibration_windows.csv
+  - Scaled:  data/processed/scaled/calibration_scaled.csv
+  - Windows: data/interim/splits/test_windows.csv
+  - Scaled:  data/processed/scaled/test_scaled.csv
+  - Scaler:  outputs/models/scalers/energy_scaler.pkl
+
+2. FEATURE & SEQUENCE SPECIFICATIONS:
+-------------------------------------
+  - Energy Modality (1 feature)  : hourly_active_power
+  - Weather Modality (7 features): temp, feels_like, humidity, pressure, speed, wind_sin, wind_cos
+  - Target (24 steps)            : hourly_active_power (t+1 to t+24 in watts, scaled)
+  - History Length               : 168 hours (t-167 to t)
+  - Forecast Horizon             : 24 hours (t+1 to t+24)
+  - Future Weather in Inputs     : NONE (Strictly excluded)
+
+3. PARTITION SHAPES & SAMPLE COUNTS:
+------------------------------------
+  [TRAIN]
+    Sample Count   : 3,816
+    X_energy Shape : [3816, 168, 1]
+    X_weather Shape: [3816, 168, 7]
+    y Shape        : [3816, 24]
+    Origins        : 2022-12-09 09:00:00 to 2023-09-22 15:00:00
+    First Sample   : History [2022-12-02 10:00:00 to 2022-12-09 09:00:00], Target [2022-12-09 10:00:00 to 2022-12-10 09:00:00]
+    Last Sample    : History [2023-09-15 16:00:00 to 2023-09-22 15:00:00], Target [2023-09-22 16:00:00 to 2023-09-23 15:00:00]
+    NaNs / Infs    : 0 NaNs, 0 Infs (PASS)
+
+  [VALIDATION]
+    Sample Count   : 881
+    X_energy Shape : [881, 168, 1]
+    X_weather Shape: [881, 168, 7]
+    y Shape        : [881, 24]
+    Origins        : 2023-09-22 16:00:00 to 2023-11-14 02:00:00
+    First Sample   : History [2023-09-15 17:00:00 to 2023-09-22 16:00:00], Target [2023-09-22 17:00:00 to 2023-09-23 16:00:00]
+    Last Sample    : History [2023-11-07 03:00:00 to 2023-11-14 02:00:00], Target [2023-11-14 03:00:00 to 2023-11-15 02:00:00]
+    NaNs / Infs    : 0 NaNs, 0 Infs (PASS)
+
+  [CALIBRATION]
+    Sample Count   : 587
+    X_energy Shape : [587, 168, 1]
+    X_weather Shape: [587, 168, 7]
+    y Shape        : [587, 24]
+    Origins        : 2023-11-14 03:00:00 to 2023-12-08 13:00:00
+    First Sample   : History [2023-11-07 04:00:00 to 2023-11-14 03:00:00], Target [2023-11-14 04:00:00 to 2023-11-15 03:00:00]
+    Last Sample    : History [2023-12-01 14:00:00 to 2023-12-08 13:00:00], Target [2023-12-08 14:00:00 to 2023-12-09 13:00:00]
+    NaNs / Infs    : 0 NaNs, 0 Infs (PASS)
+
+  [TEST]
+    Sample Count   : 587
+    X_energy Shape : [587, 168, 1]
+    X_weather Shape: [587, 168, 7]
+    y Shape        : [587, 24]
+    Origins        : 2023-12-08 14:00:00 to 2024-01-02 00:00:00
+    First Sample   : History [2023-12-01 15:00:00 to 2023-12-08 14:00:00], Target [2023-12-08 15:00:00 to 2023-12-09 14:00:00]
+    Last Sample    : History [2023-12-26 01:00:00 to 2024-01-02 00:00:00], Target [2024-01-02 01:00:00 to 2024-01-03 00:00:00]
+    NaNs / Infs    : 0 NaNs, 0 Infs (PASS)
+
+4. SAMPLE-LEVEL ALIGNMENT INSPECTION:
+-------------------------------------
+  [TRAIN]
+    Sample ( first, idx=   0): Origin=2022-12-09 09:00:00 | e_start=-0.3770, e_end=-0.5621 | y_start=-0.6055, y_end=-1.1184 [ALIGNMENT VERIFIED]
+    Sample (middle, idx=1908): Origin=2023-04-18 15:00:00 | e_start=0.1987, e_end=0.6994 | y_start=-0.3132, y_end=-0.5583 [ALIGNMENT VERIFIED]
+    Sample (  last, idx=3815): Origin=2023-09-22 15:00:00 | e_start=-0.2536, e_end=-0.4648 | y_start=-0.8750, y_end=-0.4953 [ALIGNMENT VERIFIED]
+
+  [VALIDATION]
+    Sample ( first, idx=   0): Origin=2023-09-22 16:00:00 | e_start=-0.1980, e_end=-0.8750 | y_start=-0.8769, y_end=-1.3408 [ALIGNMENT VERIFIED]
+    Sample (middle, idx= 440): Origin=2023-10-11 00:00:00 | e_start=0.6803, e_end=-1.1598 | y_start=-0.6790, y_end=-0.7806 [ALIGNMENT VERIFIED]
+    Sample (  last, idx= 880): Origin=2023-11-14 02:00:00 | e_start=-1.2888, e_end=-1.4136 | y_start=-1.0089, y_end=-1.1925 [ALIGNMENT VERIFIED]
+
+  [CALIBRATION]
+    Sample ( first, idx=   0): Origin=2023-11-14 03:00:00 | e_start=-1.1652, e_end=-1.0089 | y_start=-1.4622, y_end=-1.0849 [ALIGNMENT VERIFIED]
+    Sample (middle, idx= 293): Origin=2023-11-26 08:00:00 | e_start=-0.6242, e_end=-1.3255 | y_start=-1.2656, y_end=-1.1142 [ALIGNMENT VERIFIED]
+    Sample (  last, idx= 586): Origin=2023-12-08 13:00:00 | e_start=-1.2667, e_end=-0.4723 | y_start=-0.8111, y_end=-0.9619 [ALIGNMENT VERIFIED]
+
+  [TEST]
+    Sample ( first, idx=   0): Origin=2023-12-08 14:00:00 | e_start=-0.5297, e_end=-0.8111 | y_start=0.1887, y_end=-0.8301 [ALIGNMENT VERIFIED]
+    Sample (middle, idx= 293): Origin=2023-12-20 19:00:00 | e_start=0.4795, e_end=0.4560 | y_start=0.5709, y_end=0.6078 [ALIGNMENT VERIFIED]
+    Sample (  last, idx= 586): Origin=2024-01-02 00:00:00 | e_start=-0.6847, e_end=-1.2160 | y_start=-1.0250, y_end=-0.0371 [ALIGNMENT VERIFIED]
+
+5. INVERSE-TRANSFORM SANITY CHECKS (y in Watts):
+------------------------------------------------
+  - TRAIN       : min =  53.98 W, max = 909.60 W, mean = 297.70 W
+  - VALIDATION  : min =  57.50 W, max = 969.08 W, mean = 265.42 W
+  - CALIBRATION : min =  58.49 W, max = 660.69 W, mean = 219.53 W
+  - TEST        : min =  47.87 W, max = 538.19 W, mean = 203.59 W
+
+6. LEAKAGE & INTEGRITY AUDIT SUMMARY:
+-------------------------------------
+  - A. Future target in X_energy           : False (PASS)
+  - B. Future weather in X_weather         : False (PASS)
+  - C. Forbidden weather columns present   : False (PASS)
+  - D. Cross-partition window leakage      : False (PASS)
+  - E. Invalid hour inside sequence        : False (PASS - all 192 hours verified valid)
+  - F. NaN or infinite values in arrays    : False (PASS)
+  - G. Random shuffling occurred           : False (PASS - strictly chronological)
+  - H. Scaler refitted in Step 3.9         : False (PASS - frozen Step 3.8 scalers)
+  - I. Raw CSV size (76,799,474 bytes)     : Verified (PASS)
+
+7. OVERALL CONCLUSION: ALL 11 CHECKS PASSED (STATUS: PASS)

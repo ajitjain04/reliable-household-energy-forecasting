@@ -1,0 +1,89 @@
+# Model configuration for household energy forecasting project.
+# Step 4.1: Energy-Only LSTM Baseline
+
+energy_only:
+  # Architecture
+  input_size: 1           # single energy feature (hourly_active_power)
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.2
+  forecast_horizon: 24    # hours to forecast
+
+  # Training
+  batch_size: 64
+  learning_rate: 0.001
+  max_epochs: 50
+  early_stopping_patience: 7
+  seed: 42
+  device: cpu
+
+  # Metrics
+  mape_clamp_threshold_watts: 10.0
+
+# Step 4.2: Early Fusion LSTM (Energy + Weather at input level)
+early_fusion:
+  # Architecture
+  input_size: 8           # 1 energy + 7 weather features concatenated
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.2
+  forecast_horizon: 24    # hours to forecast
+
+  # Training
+  batch_size: 64
+  learning_rate: 0.001
+  max_epochs: 50
+  early_stopping_patience: 7
+  seed: 42
+  device: cpu
+
+  # Metrics
+  mape_clamp_threshold_watts: 10.0
+
+# Step 4.3: Late Fusion LSTM (Independent Encoders for Energy & Weather)
+late_fusion:
+  # Architecture
+  energy_input_size: 1    # single energy feature (hourly_active_power)
+  weather_input_size: 7   # 7 weather features
+  hidden_size: 64
+  num_layers: 2
+  dropout: 0.2
+  fusion_hidden_size: 64
+  forecast_horizon: 24    # hours to forecast
+
+  # Training
+  batch_size: 64
+  learning_rate: 0.001
+  max_epochs: 50
+  early_stopping_patience: 7
+  seed: 42
+  device: cpu
+
+  # Metrics
+  mape_clamp_threshold_watts: 10.0
+
+# Step 4.4: Hybrid Fusion LSTM (Intermediate Sequence Fusion + Joint Temporal LSTM)
+hybrid_fusion:
+  # Architecture
+  energy_input_size: 1    # single energy feature (hourly_active_power)
+  weather_input_size: 7   # 7 weather features
+  encoder_hidden_size: 64
+  encoder_num_layers: 2
+  encoder_dropout: 0.2
+  intermediate_fusion_size: 64
+  joint_hidden_size: 64
+  joint_num_layers: 1
+  forecast_horizon: 24    # hours to forecast
+
+  # Training
+  batch_size: 64
+  learning_rate: 0.001
+  max_epochs: 50
+  early_stopping_patience: 7
+  seed: 42
+  device: cpu
+
+  # Metrics
+  mape_clamp_threshold_watts: 10.0
+
+

@@ -1,0 +1,9 @@
+experiment,model,weather_sensitivity_pct,electricity_sensitivity_pct,joint_sensitivity_pct,weather_minus_electricity
+missingness_30,Energy-Only,0.0,11.7196,11.7196,-11.7196
+missingness_30,Early Fusion,0.2433,4.9752,6.6393,-4.7319
+missingness_30,Late Fusion,0.8216,4.3086,5.3701,-3.487
+missingness_30,Hybrid Fusion,0.4423,2.2972,2.9453,-1.8549
+noise_20,Energy-Only,0.0,0.5589,0.5589,-0.5589
+noise_20,Early Fusion,0.0903,0.0102,0.1284,0.0801
+noise_20,Late Fusion,0.0248,0.1025,0.1275,-0.0777
+noise_20,Hybrid Fusion,0.0061,0.0332,0.0397,-0.0271

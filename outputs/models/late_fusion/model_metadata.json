@@ -1,0 +1,52 @@
+{
+  "step": "4.3",
+  "model_name": "late_fusion_lstm",
+  "model_class": "LateFusionLSTM",
+  "description": "Multimodal LSTM with independent energy and weather encoders fused after recurrence",
+  "trainable_parameters": 112216,
+  "energy_input_shape": [
+    null,
+    168,
+    1
+  ],
+  "weather_input_shape": [
+    null,
+    168,
+    7
+  ],
+  "output_shape": [
+    null,
+    24
+  ],
+  "history_length_hours": 168,
+  "forecast_horizon_hours": 24,
+  "features": {
+    "energy": [
+      "hourly_active_power"
+    ],
+    "weather": [
+      "temp",
+      "feels_like",
+      "humidity",
+      "pressure",
+      "speed",
+      "wind_sin",
+      "wind_cos"
+    ]
+  },
+  "training": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss_function": "MSELoss",
+    "batch_size": 64,
+    "max_epochs": 50,
+    "patience": 7,
+    "best_epoch": 2,
+    "best_val_loss_scaled": 0.470367,
+    "actual_epochs_trained": 9,
+    "training_time_seconds": 260.92,
+    "seed": 42,
+    "device": "cpu"
+  },
+  "created_at": "2026-09-23T14:55:04.103809"
+}

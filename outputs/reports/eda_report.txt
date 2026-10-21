@@ -1,0 +1,89 @@
+EXPLORATORY DATA ANALYSIS (EDA) REPORT
+FOR COLLEGE ASSIGNMENT — PRELIMINARY DATA EXPLORATION
+================================================================================
+
+1. DATASET OVERVIEW
+--------------------------------------------------------------------------------
+- Total Hourly Observations Sliced : 10,234 rows
+- Number of Columns Analyzed       : 8 numerical features + metadata
+- Temporal Coverage Range          : 2022-11-05 14:00:00 to 2024-01-05 23:00:00 (~14 months / 426 days)
+- Valid Hourly Observations        : 10,043 (98.13%)
+- Invalid Hourly Observations      : 191 (1.87%)
+- Primary Modalities Chosen        :
+    1. Electricity Demand : hourly_active_power (unit: Watts, W)
+    2. Weather Modality   : temp, feels_like, humidity, pressure, speed, wind_sin, wind_cos
+
+2. ENERGY MODALITY: DESCRIPTIVE STATISTICS
+--------------------------------------------------------------------------------
+- Feature Name        : hourly_active_power
+- Valid Sample Count  : 10,043 observations
+- Mean Demand         : 285.88 W
+- Median Demand (50%) : 261.82 W
+- Standard Deviation  : 140.89 W
+- Interquartile Range : [184.58 W, 357.96 W] (IQR = 173.38 W)
+- Range [Min, Max]    : [47.87 W, 969.08 W]
+- Distribution Shape  : Moderately right-skewed; median (261.8 W) < mean (285.9 W),
+                        reflecting periodic high-demand power spikes from household appliances.
+
+3. TEMPORAL & CYCLIC PATTERNS
+--------------------------------------------------------------------------------
+- Diurnal (Hourly) Pattern:
+    • Peak Demand Hour  : 21:00 with average demand of 331.42 W
+    • Trough Demand Hour: 05:00 with average demand of 229.54 W
+    • Observations      : Demand exhibits a clear morning ramp and a pronounced evening peak
+                          corresponding to household occupancy schedules, with baseload demand overnight.
+- Weekly (Day-of-Week) Pattern:
+    • Peak Demand Day   : Sunday (294.17 W)
+    • Trough Demand Day : Friday (271.43 W)
+    • Observations      : Weekend usage (especially Sunday) slightly exceeds weekday baselines,
+                          though variance across days remains relatively stable.
+
+4. WEATHER MODALITY: SUMMARY STATISTICS
+--------------------------------------------------------------------------------
+- temp        : Mean =     19.53, Std =     6.53, Median =    19.48, Range = [   -4.00,    38.06]
+- feels_like  : Mean =     18.72, Std =     6.64, Median =    18.84, Range = [   -4.68,    35.46]
+- humidity    : Mean =     47.93, Std =    19.02, Median =    47.03, Range = [    1.00,   100.00]
+- pressure    : Mean =   1015.21, Std =     5.74, Median =  1014.92, Range = [  999.00,  1032.90]
+- speed       : Mean =      2.62, Std =     1.95, Median =     2.26, Range = [    0.00,    10.29]
+- wind_sin    : Mean =      0.21, Std =     0.42, Median =     0.14, Range = [   -1.00,     1.00]
+- wind_cos    : Mean =      0.25, Std =     0.78, Median =     0.68, Range = [   -1.00,     1.00]
+
+5. ENERGY-WEATHER ASSOCIATIONS (PEARSON CORRELATION)
+--------------------------------------------------------------------------------
+- temp        : r = +0.4342 (moderate positive association with active power)
+- feels_like  : r = +0.4386 (moderate positive association with active power)
+- humidity    : r = -0.1383 (weak negative association with active power)
+- pressure    : r = -0.1267 (weak negative association with active power)
+- speed       : r = +0.1634 (weak positive association with active power)
+- wind_sin    : r = +0.0956 (negligible positive association with active power)
+- wind_cos    : r = +0.0818 (negligible positive association with active power)
+
+Note on Correlation:
+Pearson r measures bivariate linear association across the sample period. Correlation does
+NOT imply causal influence. Temperature and feels-like temperature show a moderate positive
+association with electricity demand (r ≈ +0.43 to +0.44), indicating seasonal co-variation
+where warmer months coincide with elevated household consumption.
+
+6. DATA QUALITY & SAMPLING COVERAGE
+--------------------------------------------------------------------------------
+- Total Hourly Slots              : 10,234
+- Complete Hours (60 observations): 9,167 (89.57%)
+- Near-Complete (54–59 obs, ≥ 90%): 876 (8.56%)
+- Sub-Threshold (< 54 obs, < 90%) : 191 (1.87%)
+- Valid Hour Threshold Standard   : ≥ 90% coverage (at least 54 minute-level records per hour)
+- Valid Hours Identified          : 10,043 (98.13%)
+- Missing/Invalid Hours Handled   : 191 (1.87%)
+- Imputation Policy               : Zero interpolation or forward-filling performed; missing hours
+                                    remain explicitly flagged as invalid to prevent synthetic bias.
+
+7. PRELIMINARY EDA CONCLUSION
+--------------------------------------------------------------------------------
+1. High Data Quality: 98.13% of all hourly slots satisfy the strict 90% completeness threshold.
+2. Distinct Temporal Signatures: Household power displays strong diurnal periodicity (evening peak at 21:00)
+   and seasonal baseline variation over the 14-month monitoring horizon.
+3. Modality Complementarity: Ambient temperature and feels-like temperature exhibit meaningful linear
+   association with power demand (r ≈ +0.44), supporting the multimodal formulation of pairing energy
+   consumption with meteorological telemetry.
+4. Scope Adherence: This exploration is purely descriptive; model performance, fusion architectures,
+   and robustness under degraded weather conditions are deferred to subsequent project phases.
+================================================================================

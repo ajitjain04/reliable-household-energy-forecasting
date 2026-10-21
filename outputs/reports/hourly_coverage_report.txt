@@ -1,0 +1,45 @@
+HOURLY COVERAGE REPORT
+======================================================================
+
+OVERVIEW
+----------------------------------------------------------------------
+  Total hourly slots          : 10,234
+  Date range                  : 2022-11-05 14:00:00 to 2024-01-05 23:00:00
+
+OBSERVATION COUNT DISTRIBUTION
+----------------------------------------------------------------------
+  60 observations (complete)  : 9,167  (89.57%)
+  54-59 observations          : 876  (8.56%)
+  30-53 observations          : 79  (0.77%)
+  1-29 observations           : 62  (0.61%)
+  0 observations (missing)    : 50  (0.49%)
+  >60 observations (ANOMALY)  : 0  (0.00%)
+
+COVERAGE RATIO STATISTICS
+----------------------------------------------------------------------
+  Minimum                     : 0.0000
+  Maximum                     : 1.0000
+  Mean                        : 0.9857
+  Median                      : 1.0000
+  Std                         : 0.1004
+
+COVERAGE QUANTILES
+----------------------------------------------------------------------
+    1.0th percentile         : 0.3500
+    5.0th percentile         : 0.9833
+   10.0th percentile         : 0.9833
+   25.0th percentile         : 1.0000
+   50.0th percentile         : 1.0000
+   75.0th percentile         : 1.0000
+   90.0th percentile         : 1.0000
+   95.0th percentile         : 1.0000
+   99.0th percentile         : 1.0000
+
+CANDIDATE THRESHOLD ANALYSIS
+----------------------------------------------------------------------
+  >= 80% coverage             : 10,085 hours qualify  (98.54% of total)
+  >= 90% coverage             : 10,043 hours qualify  (98.13% of total)
+  >= 95% coverage             : 9,962 hours qualify  (97.34% of total)
+
+======================================================================
+END OF COVERAGE REPORT

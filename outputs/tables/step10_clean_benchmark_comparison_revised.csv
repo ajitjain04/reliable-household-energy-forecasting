@@ -1,0 +1,5 @@
+model,architecture_type,trainable_parameters,history_hours,horizon_hours,input_features,val_mae_watts,val_rmse_watts,val_r2,val_mape_pct,val_smape_pct,test_mae_watts,test_rmse_watts,test_r2,test_mape_pct,test_smape_pct,delta_mae_vs_energy_only_watts,relative_delta_mae_pct,clean_test_rank
+Energy-Only,Unimodal Recurrent Baseline,51992,168,24,hourly_active_power (1 channel),77.253,101.2238,0.3605,37.97,30.44,77.8823,93.3621,0.1296,56.01,39.39,0.0,0.0,2
+Early Fusion,Joint-Input Multimodal LSTM,53784,168,24,power (1) + weather (7) concatenated (8 channels),77.4721,102.2728,0.3472,36.06,30.57,71.636,88.5589,0.2169,48.58,36.48,-6.2463,-8.02,1
+Late Fusion,Dual-Encoder Late Fusion LSTM,112216,168,24,"separate power (1) and weather (7) encoders, merged state",79.6069,101.8574,0.3525,40.16,31.82,78.9042,95.0714,0.0975,52.46,39.92,1.0219,1.31,3
+Hybrid Fusion,Cross-Modal Dual-Encoder Hybrid LSTM,145496,168,24,dual encoders with shared representation & cross projection,80.2404,102.7901,0.3406,40.65,32.13,82.1862,98.0771,0.0395,56.35,41.39,4.3039,5.53,4

@@ -1,0 +1,40 @@
+{
+  "model": "EarlyFusionLSTM",
+  "step": "4.2",
+  "validation": {
+    "partition": "validation",
+    "samples": 881,
+    "prediction_shape": [
+      881,
+      24
+    ],
+    "metrics": {
+      "mae_watts": 77.4721,
+      "rmse_watts": 102.2728,
+      "r2": 0.347195,
+      "mape_pct": 36.0647,
+      "smape_pct": 30.5708,
+      "mape_clamp_threshold_watts": 10.0
+    }
+  },
+  "test": {
+    "partition": "test",
+    "samples": 587,
+    "prediction_shape": [
+      587,
+      24
+    ],
+    "metrics": {
+      "mae_watts": 71.636,
+      "rmse_watts": 88.5589,
+      "r2": 0.216874,
+      "mape_pct": 48.5818,
+      "smape_pct": 36.4779,
+      "mape_clamp_threshold_watts": 10.0
+    }
+  },
+  "mape_low_value_rule": {
+    "description": "Actual values below threshold are clamped before MAPE division",
+    "threshold_watts": 10.0
+  }
+}

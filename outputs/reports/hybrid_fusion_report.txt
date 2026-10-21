@@ -1,0 +1,136 @@
+======================================================================
+HYBRID FUSION LSTM REPORT
+Step 4.4 -- Reliable Multimodal Household Energy Forecasting
+======================================================================
+
+Generated: 2026-09-23 15:39:39
+
+----------------------------------------------------------------------
+1. ARCHITECTURE
+----------------------------------------------------------------------
+
+  Model:                HybridFusionLSTM
+  Fusion type:          Hybrid Fusion (intermediate sequence-level fusion + joint temporal LSTM)
+  Energy input:         (batch, 168, 1)
+  Weather input:        (batch, 168, 7)
+  Energy encoder:       LSTM(1 -> 64, layers=2, dropout=0.2) -> (batch, 168, 64)
+  Weather encoder:      LSTM(7 -> 64, layers=2, dropout=0.2) -> (batch, 168, 64)
+  Intermediate fusion:  Concat (batch, 168, 128) -> Linear(128 -> 64) + ReLU -> (batch, 168, 64)
+  Joint temporal LSTM:  LSTM(64 -> 64, layers=1) -> Final timestep (batch, 64)
+  Output head:          Linear(64 -> 24)
+  Output shape:         (batch, 24)
+  Trainable params:     145,496
+
+  Features used:
+    Energy:  ['hourly_active_power']
+    Weather: ['temp', 'feels_like', 'humidity', 'pressure', 'speed', 'wind_sin', 'wind_cos']
+
+----------------------------------------------------------------------
+2. WHY THIS QUALIFIES AS HYBRID FUSION
+----------------------------------------------------------------------
+
+  - Early Fusion concatenates raw features BEFORE recurrent encoding.
+  - Late Fusion concatenates only the FINAL hidden states AFTER independent encoding.
+  - Hybrid Fusion preserves full temporal sequences from modality encoders,
+    fuses them at an intermediate stage across all historical timesteps (168x128 -> 168x64),
+    and models their joint temporal interactions using an additional recurrent layer.
+
+----------------------------------------------------------------------
+3. TRAINING CONFIGURATION
+----------------------------------------------------------------------
+
+  Optimizer:            Adam
+  Learning rate:        0.001
+  Loss function:        MSELoss (on scaled values)
+  Batch size:           64
+  Max epochs:           50
+  Early stopping:       patience 7
+  Seed:                 42
+  Device:               cpu
+
+  Train samples:        3,816
+  Validation samples:   881
+  History length:       168 hours
+  Forecast horizon:     24 hours
+
+----------------------------------------------------------------------
+4. TRAINING RESULTS
+----------------------------------------------------------------------
+
+  Total epochs run:     9
+  Best epoch:           2
+  Best val loss:        0.478850 (MSE, scaled)
+  Training time:        165.9s
+
+----------------------------------------------------------------------
+5. VALIDATION METRICS (in original Watts)
+----------------------------------------------------------------------
+
+  MAE:                  80.24 W
+  RMSE:                 102.79 W
+  R^2:                  0.3406
+  MAPE:                 40.65%
+  sMAPE:                32.13%
+
+----------------------------------------------------------------------
+6. TEST METRICS -- FINAL HYBRID FUSION RESULTS (in original Watts)
+----------------------------------------------------------------------
+
+  MAE:                  82.19 W
+  RMSE:                 98.08 W
+  R^2:                  0.0395
+  MAPE:                 56.35%
+  sMAPE:                41.39%
+
+----------------------------------------------------------------------
+7. MAPE LOW-VALUE HANDLING
+----------------------------------------------------------------------
+
+  MAPE clamping threshold: 10.0 W
+
+  Rule: When computing MAPE, actual values below the clamping
+  threshold are clamped to the threshold before division.
+  Formula: MAPE = mean(|actual - pred| / max(|actual|, threshold)) x 100
+
+----------------------------------------------------------------------
+8. FACTUAL FOUR-MODEL BENCHMARK COMPARISON
+----------------------------------------------------------------------
+
+  VALIDATION SET:
+    Metric     Energy-Only     Early Fusion    Late Fusion     Hybrid Fusion  
+    ----------------------------------------------------------------------
+    MAE        77.253          77.4721         79.6069         80.2404 W
+    RMSE       101.2238        102.2728        101.8574        102.7901 W
+    R^2        0.360517        0.347195        0.352487        0.340574
+    MAPE       37.9672%        36.0647%        40.1567%        40.6493%
+    sMAPE      30.4441%        30.5708%        31.8245%        32.1329%
+
+  TEST SET:
+    Metric     Energy-Only     Early Fusion    Late Fusion     Hybrid Fusion  
+    ----------------------------------------------------------------------
+    MAE        77.8823         71.636          78.9042         82.1862 W
+    RMSE       93.3621         88.5589         95.0714         98.0771 W
+    R^2        0.129621        0.216874        0.097459        0.039488
+    MAPE       56.0091%        48.5818%        52.462%         56.3457%
+    sMAPE      39.3932%        36.4779%        39.9191%        41.3904%
+
+  TRAINABLE PARAMETERS:
+    Energy-Only:   51,992  (1.00x)
+    Early Fusion:  53,784  (1.03x, +3.4%)
+    Late Fusion:   112,216 (2.16x, +115.8%)
+    Hybrid Fusion: 145,496 (2.80x, +179.8%)
+
+----------------------------------------------------------------------
+9. DATA INTEGRITY & AUDIT STATEMENT
+----------------------------------------------------------------------
+
+  - Step 4.1, 4.2, and 4.3 artifacts remain unmodified.
+  - Step 3.9 sequence partitions remain untouched and intact.
+  - Scalers remain read-only and were not refitted.
+  - Calibration set (587 samples) was completely isolated and untouched.
+  - Test set was evaluated once using the restored best validation checkpoint.
+  - No future weather information was utilized.
+
+======================================================================
+END OF REPORT
+======================================================================

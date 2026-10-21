@@ -1,0 +1,97 @@
+model,experiment,condition,bin_name,description,n_hours,attribution_magnitude_mean,temporal_share_pct
+Energy-Only,missingness,NN,Recent (0-23h),Past 24 hours,24,11.8867,62.82
+Energy-Only,missingness,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5269,23.93
+Energy-Only,missingness,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5067,13.25
+Energy-Only,missingness,NA,Recent (0-23h),Past 24 hours,24,11.8867,62.82
+Energy-Only,missingness,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5269,23.93
+Energy-Only,missingness,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5067,13.25
+Energy-Only,missingness,AN,Recent (0-23h),Past 24 hours,24,8.9722,66.74
+Energy-Only,missingness,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,3.1805,23.66
+Energy-Only,missingness,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,1.2899,9.6
+Energy-Only,missingness,AA,Recent (0-23h),Past 24 hours,24,8.9722,66.74
+Energy-Only,missingness,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,3.1805,23.66
+Energy-Only,missingness,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,1.2899,9.6
+Energy-Only,noise,NN,Recent (0-23h),Past 24 hours,24,11.8867,62.82
+Energy-Only,noise,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5269,23.93
+Energy-Only,noise,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5067,13.25
+Energy-Only,noise,NA,Recent (0-23h),Past 24 hours,24,11.8867,62.82
+Energy-Only,noise,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5269,23.93
+Energy-Only,noise,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5067,13.25
+Energy-Only,noise,AN,Recent (0-23h),Past 24 hours,24,11.9388,62.96
+Energy-Only,noise,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5165,23.82
+Energy-Only,noise,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5068,13.22
+Energy-Only,noise,AA,Recent (0-23h),Past 24 hours,24,11.9388,62.96
+Energy-Only,noise,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5165,23.82
+Energy-Only,noise,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,2.5068,13.22
+Early Fusion,missingness,NN,Recent (0-23h),Past 24 hours,24,12.6474,72.31
+Early Fusion,missingness,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.3473,24.85
+Early Fusion,missingness,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.497,2.84
+Early Fusion,missingness,NA,Recent (0-23h),Past 24 hours,24,14.7841,68.48
+Early Fusion,missingness,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,5.9972,27.78
+Early Fusion,missingness,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.8088,3.75
+Early Fusion,missingness,AN,Recent (0-23h),Past 24 hours,24,9.2287,72.16
+Early Fusion,missingness,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,3.2335,25.28
+Early Fusion,missingness,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.327,2.56
+Early Fusion,missingness,AA,Recent (0-23h),Past 24 hours,24,10.8881,68.15
+Early Fusion,missingness,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.5598,28.54
+Early Fusion,missingness,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.5291,3.31
+Early Fusion,noise,NN,Recent (0-23h),Past 24 hours,24,12.6474,72.31
+Early Fusion,noise,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.3473,24.85
+Early Fusion,noise,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.497,2.84
+Early Fusion,noise,NA,Recent (0-23h),Past 24 hours,24,12.6539,72.24
+Early Fusion,noise,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.3599,24.89
+Early Fusion,noise,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.5026,2.87
+Early Fusion,noise,AN,Recent (0-23h),Past 24 hours,24,12.769,72.2
+Early Fusion,noise,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.4149,24.96
+Early Fusion,noise,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.5011,2.83
+Early Fusion,noise,AA,Recent (0-23h),Past 24 hours,24,12.7724,72.18
+Early Fusion,noise,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,4.4177,24.96
+Early Fusion,noise,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.506,2.86
+Late Fusion,missingness,NN,Recent (0-23h),Past 24 hours,24,7.2855,99.4
+Late Fusion,missingness,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0442,0.6
+Late Fusion,missingness,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,missingness,NA,Recent (0-23h),Past 24 hours,24,7.3495,99.4
+Late Fusion,missingness,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0444,0.6
+Late Fusion,missingness,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,missingness,AN,Recent (0-23h),Past 24 hours,24,5.3087,99.47
+Late Fusion,missingness,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0284,0.53
+Late Fusion,missingness,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,missingness,AA,Recent (0-23h),Past 24 hours,24,5.3614,99.47
+Late Fusion,missingness,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0286,0.53
+Late Fusion,missingness,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,noise,NN,Recent (0-23h),Past 24 hours,24,7.2855,99.4
+Late Fusion,noise,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0442,0.6
+Late Fusion,noise,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,noise,NA,Recent (0-23h),Past 24 hours,24,7.2849,99.4
+Late Fusion,noise,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0442,0.6
+Late Fusion,noise,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,noise,AN,Recent (0-23h),Past 24 hours,24,7.3435,99.39
+Late Fusion,noise,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0447,0.61
+Late Fusion,noise,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Late Fusion,noise,AA,Recent (0-23h),Past 24 hours,24,7.3427,99.39
+Late Fusion,noise,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0447,0.61
+Late Fusion,noise,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,missingness,NN,Recent (0-23h),Past 24 hours,24,4.9309,99.61
+Hybrid Fusion,missingness,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0194,0.39
+Hybrid Fusion,missingness,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,missingness,NA,Recent (0-23h),Past 24 hours,24,5.1721,99.61
+Hybrid Fusion,missingness,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0201,0.39
+Hybrid Fusion,missingness,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,missingness,AN,Recent (0-23h),Past 24 hours,24,3.7077,99.65
+Hybrid Fusion,missingness,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.013,0.35
+Hybrid Fusion,missingness,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,missingness,AA,Recent (0-23h),Past 24 hours,24,3.8982,99.66
+Hybrid Fusion,missingness,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0135,0.34
+Hybrid Fusion,missingness,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,noise,NN,Recent (0-23h),Past 24 hours,24,4.9309,99.61
+Hybrid Fusion,noise,NN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0194,0.39
+Hybrid Fusion,noise,NN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,noise,NA,Recent (0-23h),Past 24 hours,24,4.9322,99.61
+Hybrid Fusion,noise,NA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0194,0.39
+Hybrid Fusion,noise,NA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,noise,AN,Recent (0-23h),Past 24 hours,24,4.9793,99.61
+Hybrid Fusion,noise,AN,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0197,0.39
+Hybrid Fusion,noise,AN,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0
+Hybrid Fusion,noise,AA,Recent (0-23h),Past 24 hours,24,4.9806,99.61
+Hybrid Fusion,noise,AA,Intermediate (24-71h),Prior 48 hours (Days -2 to -3),48,0.0197,0.39
+Hybrid Fusion,noise,AA,Distant (72-167h),Prior 96 hours (Days -4 to -7),96,0.0,0.0

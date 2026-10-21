@@ -1,0 +1,430 @@
+================================================================================
+STEP 10 — FINAL RESEARCH RESULTS SYNTHESIS REPORT (REVISED)
+Reliable Multimodal Household Energy Forecasting Under Degraded Weather Information
+================================================================================
+Generated: 2026-10-10 20:26:00
+Status: COMPLETE — Fully Audited, Evidence-Based Research Synthesis
+
+================================================================================
+1. EXECUTIVE SUMMARY & RESEARCH MANDATE
+================================================================================
+This report synthesizes the empirical evidence, statistical tests, explainability
+analyses, and uncertainty quantification results from Steps 4 through 9 of the
+research project: "Reliable Multimodal Household Energy Forecasting Under Degraded
+Weather Information."
+
+The core research question investigates whether fusing auxiliary weather variables
+(temperature, apparent temperature, relative humidity, atmospheric pressure, wind
+speed, wind sin/cos components) with past household electricity consumption improves
+forecasting accuracy, and whether multimodal neural architectures maintain reliable,
+calibrated predictions when weather or electricity sensors suffer operational
+degradation (sensor missingness and measurement noise).
+
+The experimental investigation evaluated four distinct neural architectures:
+  1. Energy-Only LSTM (Unimodal autoregressive baseline, 51,992 parameters)
+  2. Early Fusion LSTM (Joint concatenation input encoder, 53,784 parameters)
+  3. Late Fusion LSTM (Independent unimodal feature extractors, 112,216 parameters)
+  4. Hybrid Fusion LSTM (Cross-modal projection with shared representation, 145,496 parameters)
+
+All models were evaluated under identical frozen conditions:
+  - Temporal input context: 168 hours (7 days) of hourly historical observations
+  - Forecast horizon: 24 hours ahead (multi-step autoregressive rollout)
+  - Withheld evaluation set: 587 rolling test windows (14,088 forecast points)
+  - Controlled degradation regimes:
+      * 30% MCAR Missingness: Mean-value masking (zero in standardized space)
+      * 20% Additive Gaussian Noise: Zero-mean AWGN (eta = 0.20 in standardized space)
+      * 2x2 Factorial Matrix: Clean (N-N), Weather-Degraded (N-A), Electricity-
+        Degraded (A-N), and Joint-Degraded (A-A)
+  - Inferential Battery: 78 paired statistical tests (Wilcoxon Signed-Rank,
+    Holm-Bonferroni correction, Benjamini-Hochberg FDR, HLN Diebold-Mariano)
+  - Explainable AI: Integrated Gradients across 587 windows (m = 20 steps)
+  - Uncertainty Quantification: Horizon-Wise Absolute-Residual Split Conformal
+    Prediction (N_cal = 587, alpha = 0.10, nominal coverage = 90.0%)
+
+================================================================================
+2. CLEAN BENCHMARK EVALUATION (STEP 4)
+================================================================================
+Under nominal operating conditions (clean electricity history and clean historical
+weather), the models exhibited marked performance divergences between validation
+selection and final out-of-sample test evaluation.
+
+TABLE 2.1: FOUR-MODEL CLEAN BENCHMARK PERFORMANCE COMPARISON
+-----------------------------------------------------------------------------------------------------------------------
+Model Architecture   Trainable   Validation Set (N=881)           Test Set (N=587)                  vs Energy-Only
+                     Params      MAE (W)   RMSE (W)  R^2   MAPE   MAE (W)   RMSE (W)  R^2    MAPE   Delta MAE   Rel MAE
+-----------------------------------------------------------------------------------------------------------------------
+Energy-Only Baseline  51,992      77.25     101.22   0.360 37.97%  77.88     93.36   0.130  56.01%    0.00 W     0.00%
+Early Fusion LSTM     53,784      77.47     102.27   0.347 36.06%  71.64     88.56   0.217  48.58%   -6.25 W    -8.02%
+Late Fusion LSTM     112,216      79.61     101.86   0.352 40.16%  78.90     95.07   0.097  52.46%   +1.02 W    +1.31%
+Hybrid Fusion LSTM   145,496      80.24     102.79   0.341 40.65%  82.19     98.08   0.039  56.35%   +4.30 W    +5.53%
+-----------------------------------------------------------------------------------------------------------------------
+
+Key Clean Benchmark Findings:
+1. Early Fusion Superiority:
+   Early Fusion achieved the lowest test MAE across all models, recording a test
+   MAE of 71.64 W (vs 77.88 W for Energy-Only, -8.02% relative error reduction), an
+   RMSE of 88.56 W (vs 93.36 W, -5.14%), an R^2 of 0.2169 (vs 0.1296), and a MAPE of
+   48.58% (vs 56.01%).
+2. Performance of Decoupled Fusion Architectures:
+   In this benchmark, the decoupled multimodal architectures (Late Fusion and Hybrid
+   Fusion) did not yield lower test forecast errors than Early Fusion or the unimodal
+   baseline. Late Fusion attained 78.90 W MAE (+1.31% higher than Energy-Only), while
+   Hybrid Fusion attained 82.19 W MAE (+5.53% higher). While all four models achieved
+   comparable validation MAE during training checkpoint selection (77.25 W to 80.24 W),
+   Late Fusion and Hybrid Fusion exhibited higher out-of-sample test MAE, indicating
+   that their additional architectural capacity and separate modal recurrent encoders
+   did not translate into improved out-of-sample generalization under this setup.
+
+================================================================================
+3. CONTROLLED ROBUSTNESS UNDER SENSOR MISSINGNESS & NOISE (STEPS 5A, 5B, 6)
+================================================================================
+All four models were evaluated across seven operational regimes: Clean (N-N), 30%
+MCAR Missingness (N-A, A-N, A-A), and 20% Additive Gaussian Noise (N-A, A-N, A-A).
+This generated 28 primary experimental evaluations.
+
+TABLE 3.1: MASTER PERFORMANCE TABLE ACROSS ALL 28 EXPERIMENTAL CONDITIONS
+----------------------------------------------------------------------------------------------------------------------------------
+Operational Regime         Model Architecture  Condition  MAE (W)  Delta MAE  Rel MAE %  RMSE (W) Rel RMSE %    R^2     PICP %   MPIW (W)  Winkler IS
+----------------------------------------------------------------------------------------------------------------------------------
+Nominal Clean              Energy-Only           N-N       77.88    +0.00 W     0.00%     93.36     0.00%     0.1296   86.39%   267.13    361.03
+Nominal Clean              Early Fusion          N-N       71.64    +0.00 W     0.00%     88.56     0.00%     0.2169   88.56%   268.26    360.65
+Nominal Clean              Late Fusion           N-N       78.90    +0.00 W     0.00%     95.07     0.00%     0.0975   89.84%   286.60    382.96
+Nominal Clean              Hybrid Fusion         N-N       82.19    +0.00 W     0.00%     98.08     0.00%     0.0395   88.47%   284.26    380.79
+
+30% MCAR Missingness       Energy-Only           N-A       77.88    +0.00 W     0.00%     93.36     0.00%     0.1296   86.39%   267.13    361.03
+30% MCAR Missingness       Energy-Only           A-N       87.01    +9.13 W    +11.72%    102.29    +9.57%    -0.0449   79.92%   267.13    399.39
+30% MCAR Missingness       Energy-Only           A-A       87.01    +9.13 W    +11.72%    102.29    +9.57%    -0.0449   79.92%   267.13    399.39
+
+30% MCAR Missingness       Early Fusion          N-A       71.81    +0.17 W     +0.24%     88.56     0.00%     0.2169   88.86%   268.26    360.96
+30% MCAR Missingness       Early Fusion          A-N       75.20    +3.56 W     +4.98%     91.95    +3.82%     0.1558   85.85%   268.26    368.16
+30% MCAR Missingness       Early Fusion          A-A       76.39    +4.76 W     +6.64%     92.80    +4.79%     0.1400   85.75%   268.26    369.88
+
+30% MCAR Missingness       Late Fusion           N-A       79.55    +0.65 W     +0.82%     95.38    +0.33%     0.0915   89.79%   286.60    379.98
+30% MCAR Missingness       Late Fusion           A-N       82.30    +3.40 W     +4.31%     97.70    +2.76%     0.0469   88.71%   286.60    376.29
+30% MCAR Missingness       Late Fusion           A-A       83.14    +4.24 W     +5.37%     98.28    +3.37%     0.0355   88.42%   286.60    374.98
+
+30% MCAR Missingness       Hybrid Fusion         N-A       82.55    +0.36 W     +0.44%     98.22    +0.15%     0.0367   88.25%   284.26    378.90
+30% MCAR Missingness       Hybrid Fusion         A-N       84.07    +1.89 W     +2.30%     99.65    +1.60%     0.0084   87.05%   284.26    379.24
+30% MCAR Missingness       Hybrid Fusion         A-A       84.61    +2.42 W     +2.95%     99.95    +1.91%     0.0024   86.84%   284.26    378.10
+
+20% AWGN Noise (eta=0.20)  Energy-Only           N-A       77.88    +0.00 W     0.00%     93.36     0.00%     0.1296   86.39%   267.13    361.03
+20% AWGN Noise (eta=0.20)  Energy-Only           A-N       78.32    +0.44 W     +0.56%     93.87    +0.54%     0.1202   86.11%   267.13    364.00
+20% AWGN Noise (eta=0.20)  Energy-Only           A-A       78.32    +0.44 W     +0.56%     93.87    +0.54%     0.1202   86.11%   267.13    364.00
+
+20% AWGN Noise (eta=0.20)  Early Fusion          N-A       71.70    +0.06 W     +0.09%     88.61    +0.06%     0.2160   88.54%   268.26    360.67
+20% AWGN Noise (eta=0.20)  Early Fusion          A-N       71.64    +0.01 W     +0.01%     88.55    -0.01%     0.2171   88.46%   268.26    360.47
+20% AWGN Noise (eta=0.20)  Early Fusion          A-A       71.73    +0.09 W     +0.13%     88.62    +0.07%     0.2158   88.58%   268.26    360.62
+
+20% AWGN Noise (eta=0.20)  Late Fusion           N-A       78.92    +0.02 W     +0.02%     95.08    +0.01%     0.0972   89.81%   286.60    382.95
+20% AWGN Noise (eta=0.20)  Late Fusion           A-N       78.99    +0.08 W     +0.10%     95.14    +0.07%     0.0961   89.80%   286.60    383.00
+20% AWGN Noise (eta=0.20)  Late Fusion           A-A       79.00    +0.10 W     +0.13%     95.15    +0.09%     0.0959   89.79%   286.60    383.01
+
+20% AWGN Noise (eta=0.20)  Hybrid Fusion         N-A       82.19    +0.01 W     +0.01%     98.08     0.00%     0.0394   88.44%   284.26    380.81
+20% AWGN Noise (eta=0.20)  Hybrid Fusion         A-N       82.21    +0.03 W     +0.03%     98.09    +0.02%     0.0392   88.40%   284.26    380.72
+20% AWGN Noise (eta=0.20)  Hybrid Fusion         A-A       82.22    +0.03 W     +0.04%     98.10    +0.02%     0.0391   88.41%   284.26    380.74
+----------------------------------------------------------------------------------------------------------------------------------
+
+Critical Robustness Observations:
+1. Marked Modality Sensitivity Asymmetry:
+   Across all architectures, electricity history missingness caused substantial forecast
+   degradation (error increases of +1.89 W to +9.13 W), whereas weather missingness
+   caused small error increments (+0.17 W to +0.65 W). Weather degradation alone
+   degraded Early Fusion MAE by only +0.24% (+0.17 W).
+2. Missingness vs Noise Degradation:
+   Under 30% MCAR missingness (A-A), MAE increased substantially across all models:
+     - Energy-Only: +9.13 W (+11.72%)
+     - Early Fusion: +4.76 W (+6.64%)
+     - Late Fusion: +4.24 W (+5.37%)
+     - Hybrid Fusion: +2.42 W (+2.95%)
+   Conversely, under 20% AWGN noise (A-A), MAE increases were minute:
+     - Energy-Only: +0.44 W (+0.56%)
+     - Early Fusion: +0.09 W (+0.13%)
+     - Late Fusion: +0.10 W (+0.13%)
+     - Hybrid Fusion: +0.03 W (+0.04%)
+   In paired cross-degradation testing (Family 6), missingness degradation exceeded
+   noise degradation by +8.69 W for Energy-Only (p_holm = 1.17e-61), +4.66 W for
+   Early Fusion (p_holm = 1.76e-37), +4.14 W for Late Fusion (p_holm = 8.56e-26), and
+   +2.39 W for Hybrid Fusion (p_holm = 2.31e-27).
+3. Decoupling of Clean Accuracy and Relative Robustness:
+   Hybrid Fusion demonstrated the smallest relative degradation under dual missingness
+   (+2.95% relative MAE increase vs +6.64% for Early Fusion and +11.72% for Energy-Only).
+   However, because Early Fusion started from a lower clean baseline (71.64 W
+   vs 82.19 W), Early Fusion's degraded performance under dual missingness (76.39 W)
+   remained lower than Hybrid Fusion's clean performance (82.19 W).
+4. Strict Verification of Energy-Only Invariance Controls:
+   The Energy-Only baseline ignores weather features by construction. As required by
+   protocol integrity, its metrics under Weather Missingness (N-A) were identical to
+   Clean N-N (diff <= 2.5e-5 W), and under Joint Missingness (A-A) were identical to
+   Electricity-Only Missingness (A-N, diff = 0.0 W). The same control identities held
+   under Noise (N-A == N-N, A-A == A-N).
+
+================================================================================
+4. FORMAL STATISTICAL SIGNIFICANCE TESTING (STEP 7)
+================================================================================
+The formal inferential evaluation comprised 78 planned hypothesis tests using
+paired per-window MAE (N = 587 windows) as the primary observational unit. Two-sided
+Wilcoxon Signed-Rank tests were corrected for multiple comparisons using
+Holm-Bonferroni within each of the 6 families, backed by Benjamini-Hochberg FDR,
+paired permutation tests (B = 10,000), and HLN-modified Diebold-Mariano tests
+with Newey-West HAC lag-24 covariance adjustments.
+
+TABLE 4.1: STATISTICAL INFERENCE SUMMARY ACROSS ALL 6 FAMILIES
+-----------------------------------------------------------------------------------------------------------------------
+Hypothesis Family                             Tests   Raw Sig   Holm Sig   FDR Sig   Core Statistical Finding
+-----------------------------------------------------------------------------------------------------------------------
+Family 1: Clean Model Comparisons (N-N)          6       5         5         5       Early Fusion significantly beats all
+                                                                                     models (p_holm < 1e-16). Late vs Energy
+                                                                                     is not significant (p_holm = 0.1197).
+Family 2: Model Comparisons Under Missingness   18      18        18        18       Early Fusion maintains significant lead
+                                                                                     over all models across all missingness
+                                                                                     conditions (all p_holm < 1e-16).
+Family 3: Model Comparisons Under Noise         18      15        15        15       Early Fusion significantly beats all
+                                                                                     models under all noise conditions. Late vs
+                                                                                     Energy remains non-significant (p > 0.30).
+Family 4: Within-Model Missingness Impact       12      10        10        10       Electricity missingness (A-N, A-A) is
+                                                                                     significant across all models (p < 1e-15).
+                                                                                     Weather missingness (N-A) is non-significant
+                                                                                     for Energy (0.0 W) & Early Fusion (p = 0.560).
+Family 5: Within-Model Noise Impact             12       2         2         2       Across all 3 multimodal models, noise causes
+                                                                                     NO statistically significant degradation
+                                                                                     (all p_holm > 0.05). Only Energy-Only power
+                                                                                     noise reached significance (p = 0.0013).
+Family 6: Cross-Degradation (Miss vs Noise)     12      10        10        10       Missingness causes significantly greater
+                                                                                     degradation than noise under A-N and A-A
+                                                                                     across all models (all p_holm < 1e-16).
+-----------------------------------------------------------------------------------------------------------------------
+Total Hypothesis Tests Battery                  78      60        60        60       Rejection Rate: 76.9% (60 / 78 tests)
+
+Key Inferential Confirmations (Exact Statistics):
+1. Early Fusion's clean advantage is statistically significant:
+   - vs Energy-Only: Mean Diff = -6.2463 W [-7.0532, -5.4851], r_rb = -0.6385, Wilcoxon W = 31189.0,
+     p_raw = 1.7032e-28, p_holm = 8.5159e-28, HLN-DM stat = -3.6934, p_hln = 2.4503e-04.
+   - vs Late Fusion: Mean Diff = -7.2682 W [-8.0401, -6.4093], r_rb = -0.7187, Wilcoxon W = 24263.0,
+     p_raw = 2.2346e-38, p_holm = 1.3408e-37, HLN-DM stat = -5.2078, p_hln = 2.7594e-07.
+   - vs Hybrid Fusion: Mean Diff = -10.5502 W [-11.4502, -9.6010], r_rb = -0.8114, Wilcoxon W = 16275.0,
+     p_raw = 6.4258e-52, p_holm = 3.8555e-51, HLN-DM stat = -6.4526, p_hln = 2.7020e-10.
+   - Late Fusion vs Energy-Only (Not Significant): Mean Diff = +1.0219 W [0.0151, 1.9961], r_rb = 0.0737,
+     Wilcoxon W = 79930.0, p_raw = 0.1197, p_holm = 0.1197, HLN-DM stat = 0.8878, p_hln = 0.3751.
+2. Robustness Lead Preserved:
+   Under joint 30% MCAR missingness (A-A), Early Fusion's advantage over all
+   alternatives remained statistically significant:
+   - vs Energy-Only: Mean Diff = -10.6177 W [-11.6441, -9.6738], r_rb = -0.8180, Wilcoxon W = 20387.0,
+     p_raw = 1.2581e-42, p_holm = 2.2647e-41.
+   - vs Late Fusion: Mean Diff = -6.7493 W [-7.6416, -5.8118], r_rb = -0.6420, Wilcoxon W = 27725.0,
+     p_raw = 6.9406e-35, p_holm = 1.2493e-33.
+   - vs Hybrid Fusion: Mean Diff = -8.2147 W [-9.2435, -7.1651], r_rb = -0.6750, Wilcoxon W = 25056.0,
+     p_raw = 2.9157e-31, p_holm = 5.2483e-30.
+3. Test Congruence:
+   Paired permutation tests (B = 10,000) yielded 100% directional and decision
+   agreement with Wilcoxon Signed-Rank tests across all 78 comparisons.
+
+================================================================================
+5. EXPLAINABLE AI & MODALITY ATTRIBUTION (STEP 8)
+================================================================================
+Integrated Gradients (m = 20 interpolation steps, baseline x' = 0.0 in standardized
+space, representing training feature means) was computed across all 587 test
+windows without subsampling.
+
+TABLE 5.1: CLEAN N-N MODALITY ATTRIBUTION & DENSITY SHARES
+-----------------------------------------------------------------------------------------------------------------------
+Model Architecture   Total Electricity Share %   Total Weather Share %   Per-Channel Density Share (Elec vs Weath)
+-----------------------------------------------------------------------------------------------------------------------
+Early Fusion LSTM             33.10%                    66.90%                      76.22% vs 23.78%
+Late Fusion LSTM              53.27%                    46.73%                      88.41% vs 11.59%
+Hybrid Fusion LSTM            45.19%                    54.81%                      84.61% vs 15.39%
+Energy-Only Baseline         100.00%                     0.00%                     100.00% vs  0.00%
+-----------------------------------------------------------------------------------------------------------------------
+
+TABLE 5.2: ATTRIBUTION SHIFT UNDER DEGRADATION (DELTA PERCENTAGE POINTS)
+-----------------------------------------------------------------------------------------------------------------------
+Model Architecture   Miss N-A (Elec Shift)   Miss A-N (Elec Shift)   Miss A-A (Elec Shift)   Noise A-A (Elec Shift)
+-----------------------------------------------------------------------------------------------------------------------
+Early Fusion LSTM           +8.14%                  -7.71%                  -0.58%                  +0.02%
+Late Fusion LSTM            +4.88%                  -8.79%                  -3.95%                  +0.02%
+Hybrid Fusion LSTM          +5.76%                  -8.40%                  -2.99%                  +0.08%
+-----------------------------------------------------------------------------------------------------------------------
+
+Principal Explainability Findings:
+1. Dimensionality Disparity vs Per-Channel Density:
+   While raw attribution share indicates that weather channels capture 46.7% to 66.9%
+   of total attribution, this is distributed across 7 channels. On a per-channel
+   density basis, electricity history accounts for 76.2% to 88.4% of total attribution
+   density. This aligns with the observation that degrading the single electricity
+   channel produces larger forecast errors than degrading weather.
+2. Dynamic Attribution Reallocation Under Missingness:
+   When weather is masked (N-A), models reallocate gradient flow toward
+   the intact electricity modality (+4.88% to +8.14% electricity share increase).
+   Conversely, when electricity is masked (A-N), models reallocate attribution toward
+   intact weather features (-7.71% to -8.79% electricity share drop).
+3. Attribution Stability Under Noise:
+   Under 20% AWGN noise (A-A), attribution shift was small (<= 0.08 percentage
+   points). This is consistent with the very small forecasting-performance changes
+   observed in the reliability analysis.
+4. Temporal Memory Concentration:
+   In Late Fusion and Hybrid Fusion, electricity attribution was heavily concentrated
+   within the most recent 24 hours (99.4% and 99.6% in Lags 0-23h). In contrast, Early
+   Fusion distributed 24.9% of electricity attribution into intermediate lags (24-71h)
+   and 2.8% into distant lags (72-167h).
+5. Weather Feature Hierarchy:
+   Temperature ('temp') and apparent temperature ('feels_like') consistently ranked
+   as the top two weather features, capturing 45% to 58% of all weather attribution.
+   Wind direction sin/cos components captured the lowest attribution (<8% each).
+
+================================================================================
+6. CONFORMAL PREDICTION & UNCERTAINTY QUANTIFICATION (STEP 9)
+================================================================================
+Predictive uncertainty was quantified using Horizon-Wise Absolute-Residual Split
+Conformal Prediction. Conformal thresholds q_h (h = 1,...,24) were calibrated strictly
+ONCE on the untouched clean calibration partition (N_cal = 587, alpha = 0.10,
+nominal coverage = 90.0%) using the finite-sample order statistic k = ceil(588 * 0.90) = 530.
+The resulting fixed intervals [L = yhat - q_h, U = yhat + q_h] were evaluated across
+all 28 conditions.
+
+TABLE 6.1: CONFORMAL CALIBRATION & CLEAN TEST UNCERTAINTY METRICS
+-----------------------------------------------------------------------------------------------------------------------
+Model Architecture   Calibration MAE   Mean q_h (W)   MPIW (2q_h, W)   Clean PICP %   Clean ACE %   Winkler Score
+-----------------------------------------------------------------------------------------------------------------------
+Energy-Only Baseline      70.22 W        133.56 W        267.13 W         86.39%         3.61%         361.03
+Early Fusion LSTM         68.20 W        134.13 W        268.26 W         88.56%         1.44%         360.65
+Late Fusion LSTM          76.46 W        143.30 W        286.60 W         89.84%         0.16%         382.96
+Hybrid Fusion LSTM        77.34 W        142.13 W        284.26 W         88.47%         1.53%         380.79
+-----------------------------------------------------------------------------------------------------------------------
+
+Key Uncertainty Quantification Findings:
+1. Constant Interval Width Property:
+   Because primary conformal intervals use fixed clean-calibrated q_h thresholds,
+   the Mean Prediction Interval Width (MPIW) remains strictly invariant across test
+   degradation conditions (Early Fusion: 268.26 W; Late Fusion: 286.60 W; Hybrid
+   Fusion: 284.26 W; Energy-Only: 267.13 W). Primary intervals DO NOT widen when test
+   inputs degrade; instead, degradation manifests as empirical coverage erosion
+   and interval score deterioration.
+2. Clean Calibration Accuracy:
+   Late Fusion achieved empirical coverage closest to the 90.0% nominal target
+   (89.84% PICP, ACE = 0.16%), with wider intervals (286.60 W). Early Fusion
+   achieved 88.56% PICP (ACE = 1.44%) while achieving a lower interval score
+   among multimodal models (360.65).
+3. Coverage Breakdown Under Electricity Missingness:
+   Under joint missingness (A-A), Energy-Only coverage dropped to 79.92% (ACE = 10.08%,
+   Winkler score increased to 399.39). Early Fusion dropped to 85.75% (ACE = 4.25%).
+   Late Fusion maintained 88.42% coverage (ACE = 1.58%) with its wider baseline intervals.
+4. Conformal Robustness Under Noise:
+   Under 20% AWGN noise (A-A), empirical coverage remained stable across
+   all models (Early Fusion: 88.58% vs 88.56% clean; Late Fusion: 89.79% vs 89.84%
+   clean). Within-model noise comparisons yielded p_holm = 1.000 (Not Significant).
+5. Oracle Required Width Analysis (Descriptive):
+   To restore nominal 90.0% coverage under A-A missingness, oracle test calibration
+   revealed that Energy-Only would require an interval expansion of +19.13% (+51.11 W),
+   Early Fusion would require +9.82% (+26.35 W), Hybrid Fusion +5.35% (+15.21 W), and
+   Late Fusion +2.97% (+8.50 W).
+
+================================================================================
+7. CROSS-STEP SYNTHESIS & EVIDENCE CONNECTIONS
+================================================================================
+Synthesizing Steps 4 through 9 reveals three interconnected research insights:
+
+Insight 1: Accuracy and Robustness Across Fusion Architectures
+  - Early Fusion achieved the lowest clean-data point forecasting error (71.64 W MAE)
+    and the lowest prediction interval score (360.65 Winkler score).
+  - Late Fusion and Hybrid Fusion showed lower relative error increases under
+    sensor missingness (Hybrid increased by +2.95% relative MAE under A-A vs
+    +6.64% for Early Fusion) and maintained higher empirical interval coverage (Late
+    Fusion retained 88.42% PICP under A-A).
+  - In absolute terms, Early Fusion's error under dual missingness (76.39 W MAE)
+    remained lower than Hybrid Fusion's clean error (82.19 W MAE).
+
+Insight 2: Modality Asymmetry and Feature Attribution Density
+  - The empirical finding that electricity missingness causes larger error increases
+    than weather missingness corresponds to the Step 8 Integrated Gradients analysis:
+    electricity accounts for 76.2% to 88.4% of single-channel attribution density.
+  - In household load forecasting, weather variables provide secondary contextual
+    signals, whereas past consumption reflects direct occupant behavioral routines.
+
+Insight 3: Noise Invariance vs Zero-Imputation Effects
+  - 20% additive Gaussian noise produced small forecasting changes (<= 0.10 W MAE
+    increase), non-significant differences in multimodal models (p_holm = 1.0),
+    minor attribution shift (<= 0.08% shift), and stable conformal coverage.
+  - In contrast, 30% MCAR zero-masking caused substantial degradation because
+    zero-imputation in standardized space replaces missing values with the training mean
+    (307.17 W), shifting predictions during periods of deviation from the mean.
+
+================================================================================
+8. METHODOLOGICAL LIMITATIONS & THREATS TO VALIDITY
+================================================================================
+1. Single Household Temporal Scope:
+   All evaluations were performed on 587 rolling windows from a single residential
+   meter. While providing temporal granularity over multi-season transitions,
+   findings characterize this specific dwelling and cannot be generalized
+   unconditionally across different building archetypes, microclimates, or solar prosumers.
+2. Sliding Window Autocorrelation:
+   Consecutive 24-hour forecast windows overlap by 23 hours in the sliding-window
+   protocol. While paired testing on identical windows controls for shared ambient
+   conditions and the HLN-DM test applies Newey-West HAC covariance corrections, the
+   effective degrees of freedom is lower than N = 587 independent trials.
+3. Fixed Degradation Protocols:
+   The study strictly examined 30% MCAR missingness (mean-imputed) and 20% AWGN noise.
+   Structural multi-hour contiguous outages, sensor drift, delayed telemetry, or
+   extreme noise levels were not evaluated.
+4. Marginal vs Conditional Conformal Coverage:
+   Split conformal prediction provides finite-sample marginal coverage guarantees
+   under exchangeability. It does not provide formal conditional guarantees for
+   specific hours or peak load regimes, and coverage naturally erodes when test
+   inputs suffer distribution shift.
+5. Local Gradient Explainability:
+   Integrated Gradients measures model sensitivity relative to a mean baseline;
+   it establishes computational reliance within the network, not physical causality.
+
+================================================================================
+9. EVIDENCE-BASED RESEARCH CONCLUSIONS
+================================================================================
+1. Multimodal Early Fusion Yielded the Lowest Error in This Study:
+   Early Fusion achieved the lowest forecast error under clean operation (71.64 W MAE,
+   p < 1e-16), retained the lowest error under dual sensor degradation (76.39 W MAE),
+   and produced the lowest prediction interval score (360.65 Winkler score).
+2. Decoupled Architectural Complexity Did Not Improve Forecast Accuracy:
+   Late Fusion (112,216 parameters) and Hybrid Fusion (145,496 parameters) substantially
+   increased model capacity and training runtime compared to Early Fusion (53,784
+   parameters) and Energy-Only (51,992 parameters), but did not achieve lower test
+   forecasting error than Early Fusion under nominal clean conditions or under sensor degradation.
+3. Household Load Forecasting is Inherently Asymmetric:
+   Energy history is the dominant operational signal. Auxiliary weather data provides
+   secondary contextual gains, but weather inputs cannot substitute when
+   electricity history is missing.
+4. Recurrent Architectures Handled 20% AWGN Noise but Degraded Under 30% Missingness:
+   The tested recurrent architectures showed very little sensitivity to 20% AWGN noise,
+   but suffered measurable performance drops under 30% MCAR missingness with mean imputation.
+5. Fixed Conformal Intervals Maintained Width but Lost Coverage Under Missingness:
+   Fixed clean-calibrated conformal intervals maintain constant width across conditions,
+   which resulted in lower empirical coverage when test inputs suffered missingness.
+
+================================================================================
+10. ARTIFACT INVENTORY & AUDIT TRAIL
+================================================================================
+Revised Step 10 Consolidated Tables (outputs/tables/):
+  - step10_clean_benchmark_comparison_revised.csv
+  - step10_master_performance_table_revised.csv
+  - step10_statistical_significance_summary_revised.csv
+  - step10_xai_modality_attribution_summary_revised.csv
+  - step10_conformal_uncertainty_summary_revised.csv
+
+Revised Step 10 Synthesis Report (outputs/reports/):
+  - step10_final_research_synthesis_report_revised.txt
+
+Step 10 Discrepancy & Verification Report (outputs/reports/):
+  - step10_discrepancy_and_verification_report.txt
+
+Original Step 10 Files Preserved (outputs/tables/ & outputs/reports/):
+  - step10_clean_benchmark_comparison.csv
+  - step10_master_performance_table.csv
+  - step10_statistical_significance_summary.csv
+  - step10_xai_modality_attribution_summary.csv
+  - step10_conformal_uncertainty_summary.csv
+  - step10_final_research_synthesis_report.txt
+
+Data Integrity Statement:
+All reported metrics, statistics, and attributions were pulled directly from
+pre-existing audited artifacts. Zero models were retrained. Zero experimental
+runs were modified. Zero previous reports or scripts were altered.
+
+================================================================================
+STEP 10 RESEARCH RESULTS SYNTHESIS (REVISED) — COMPLETE
+================================================================================

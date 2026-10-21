@@ -1,0 +1,33 @@
+experiment,experiment_label,model,condition,condition_description,test_mae_watts,delta_mae_vs_clean_watts,relative_mae_change_pct,test_rmse_watts,delta_rmse_vs_clean_watts,relative_rmse_change_pct,test_r2,conformal_picp_pct,conformal_ace_pct,conformal_mpiw_watts,winkler_interval_score,oracle_mpiw_for_90_coverage_watts
+missingness_30,30% MCAR Missingness,Energy-Only,NN,"Nominal (Clean Electricity, Clean Weather)",77.8823,0.0,0.0,93.3621,0.0,0.0,0.129621,86.39,3.61,267.126,361.0266,288.1748
+missingness_30,30% MCAR Missingness,Energy-Only,,"Weather-Degraded (Clean Electricity, Degraded Weather)",77.8823,0.0,0.0,93.3621,0.0,0.0,0.129621,86.39,3.61,267.126,361.0266,288.1748
+missingness_30,30% MCAR Missingness,Energy-Only,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",87.0098,9.1275,11.72,102.2941,8.932,9.57,-0.044884,79.92,10.08,267.126,399.393,318.2365
+missingness_30,30% MCAR Missingness,Energy-Only,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",87.0098,9.1275,11.72,102.2941,8.932,9.57,-0.044884,79.92,10.08,267.126,399.393,318.2365
+missingness_30,30% MCAR Missingness,Early Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",71.636,0.0,0.0,88.5589,0.0,0.0,0.216874,88.56,1.44,268.2557,360.6538,279.2583
+missingness_30,30% MCAR Missingness,Early Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",71.8103,0.1743,0.24,88.5591,0.0002,0.0,0.216871,88.86,1.14,268.2557,360.9565,276.608
+missingness_30,30% MCAR Missingness,Early Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",75.2,3.564,4.98,91.9461,3.3872,3.82,0.155823,85.85,4.15,268.2557,368.1629,294.8646
+missingness_30,30% MCAR Missingness,Early Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",76.3921,4.7561,6.64,92.8015,4.2426,4.79,0.140042,85.75,4.25,268.2557,369.8812,294.6009
+missingness_30,30% MCAR Missingness,Late Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",78.9042,0.0,0.0,95.0714,0.0,0.0,0.097459,89.84,0.16,286.5975,382.9557,286.5498
+missingness_30,30% MCAR Missingness,Late Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",79.5525,0.6483,0.82,95.3847,0.3133,0.33,0.091501,89.79,0.21,286.5975,379.9781,286.7889
+missingness_30,30% MCAR Missingness,Late Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",82.3039,3.3997,4.31,97.6981,2.6267,2.76,0.046898,88.71,1.29,286.5975,376.287,293.2822
+missingness_30,30% MCAR Missingness,Late Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",83.1414,4.2372,5.37,98.2781,3.2067,3.37,0.035547,88.42,1.58,286.5975,374.9805,295.0967
+missingness_30,30% MCAR Missingness,Hybrid Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",82.1862,0.0,0.0,98.0771,0.0,0.0,0.039488,88.47,1.53,284.2612,380.7939,294.1003
+missingness_30,30% MCAR Missingness,Hybrid Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",82.5497,0.3635,0.44,98.2204,0.1433,0.15,0.036679,88.25,1.75,284.2612,378.8963,293.9378
+missingness_30,30% MCAR Missingness,Hybrid Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",84.0742,1.888,2.3,99.6503,1.5732,1.6,0.008427,87.05,2.95,284.2612,379.2447,298.653
+missingness_30,30% MCAR Missingness,Hybrid Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",84.6068,2.4206,2.95,99.9542,1.8771,1.91,0.00237,86.84,3.16,284.2612,378.1032,299.4728
+noise_20,20% AWGN Noise,Energy-Only,NN,"Nominal (Clean Electricity, Clean Weather)",77.8823,0.0,0.0,93.3621,0.0,0.0,0.129621,86.39,3.61,267.126,361.0266,288.1748
+noise_20,20% AWGN Noise,Energy-Only,,"Weather-Degraded (Clean Electricity, Degraded Weather)",77.8823,0.0,0.0,93.3621,0.0,0.0,0.129621,86.39,3.61,267.126,361.0266,288.1748
+noise_20,20% AWGN Noise,Energy-Only,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",78.3176,0.4353,0.56,93.8666,0.5045,0.54,0.120188,86.11,3.89,267.126,363.9959,289.9747
+noise_20,20% AWGN Noise,Energy-Only,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",78.3176,0.4353,0.56,93.8666,0.5045,0.54,0.120188,86.11,3.89,267.126,363.9959,289.9747
+noise_20,20% AWGN Noise,Early Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",71.636,0.0,0.0,88.5589,0.0,0.0,0.216874,88.56,1.44,268.2557,360.6538,279.2583
+noise_20,20% AWGN Noise,Early Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",71.7007,0.0647,0.09,88.6096,0.0507,0.06,0.215978,88.54,1.46,268.2557,360.6657,280.0478
+noise_20,20% AWGN Noise,Early Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",71.6433,0.0073,0.01,88.5478,-0.0111,-0.01,0.217071,88.46,1.54,268.2557,360.4708,279.5634
+noise_20,20% AWGN Noise,Early Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",71.728,0.092,0.13,88.6169,0.058,0.07,0.215848,88.58,1.42,268.2557,360.617,279.6554
+noise_20,20% AWGN Noise,Late Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",78.9042,0.0,0.0,95.0714,0.0,0.0,0.097459,89.84,0.16,286.5975,382.9557,286.5498
+noise_20,20% AWGN Noise,Late Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",78.9238,0.0196,0.02,95.0829,0.0115,0.01,0.09724,89.81,0.19,286.5975,382.9541,286.7648
+noise_20,20% AWGN Noise,Late Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",78.9851,0.0809,0.1,95.1423,0.0709,0.07,0.096111,89.8,0.2,286.5975,383.0041,286.9148
+noise_20,20% AWGN Noise,Late Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",79.0048,0.1006,0.13,95.155,0.0836,0.09,0.09587,89.79,0.21,286.5975,383.0078,286.9497
+noise_20,20% AWGN Noise,Hybrid Fusion,NN,"Nominal (Clean Electricity, Clean Weather)",82.1862,0.0,0.0,98.0771,0.0,0.0,0.039488,88.47,1.53,284.2612,380.7939,294.1003
+noise_20,20% AWGN Noise,Hybrid Fusion,,"Weather-Degraded (Clean Electricity, Degraded Weather)",82.1912,0.005,0.01,98.0799,0.0028,0.0,0.039434,88.44,1.56,284.2612,380.8086,294.1335
+noise_20,20% AWGN Noise,Hybrid Fusion,AN,"Electricity-Degraded (Degraded Electricity, Clean Weather)",82.2135,0.0273,0.03,98.0925,0.0154,0.02,0.039188,88.4,1.6,284.2612,380.7156,294.6293
+noise_20,20% AWGN Noise,Hybrid Fusion,AA,"Joint-Degraded (Degraded Electricity, Degraded Weather)",82.2188,0.0326,0.04,98.0961,0.019,0.02,0.039117,88.41,1.59,284.2612,380.7415,294.8901

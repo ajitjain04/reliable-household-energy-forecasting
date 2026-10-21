@@ -1,0 +1,424 @@
+================================================================================
+STEP 7 — FORMAL STATISTICAL ANALYSIS PLAN AND DATA AUDIT
+Reliable Multimodal Household Energy Forecasting Under Degraded Weather Information
+================================================================================
+Document Type: Protocol Specification & Pre-Execution Data Audit
+Date: 2026-10-06
+Status: PLANNING AND AUDIT ONLY (No inferential hypothesis tests executed)
+================================================================================
+
+1. OBJECTIVE
+--------------------------------------------------------------------------------
+The objective of Step 7 is to establish a mathematically and methodologically
+rigorous inferential statistical framework to determine whether observed
+differences in forecasting accuracy and degradation robustness across the four
+frozen models (Energy-Only, Early Fusion, Late Fusion, Hybrid Fusion) under
+clean, missingness, and noise conditions are statistically distinguishable.
+
+This formal protocol covers seven core research comparisons:
+  A. Clean model comparison (N–N): Do multimodal fusion architectures offer
+     statistically distinguishable accuracy advantages over unimodal baselines?
+  B. Model comparison under weather degradation (N–A): How do models rank when
+     weather inputs suffer from 30% MCAR missingness or 20% AWGN noise?
+  C. Model comparison under electricity degradation (A–N): How do models rank
+     when primary energy history is degraded?
+  D. Model comparison under joint degradation (A–A): Which architecture
+     maintains superior absolute performance when both modalities fail?
+  E. Clean vs degraded performance within the same model: Is the performance
+     drop for a specific architecture statistically significant?
+  F. Missingness vs noise degradation impact: Is 30% MCAR missingness
+     statistically more disruptive than 20% additive Gaussian noise?
+  G. Modality-specific degradation sensitivity: Does electricity degradation
+     cause statistically larger error increases than weather degradation?
+
+
+2. DATA AUDIT OF SAVED PREDICTION ARTIFACTS
+--------------------------------------------------------------------------------
+A comprehensive, non-destructive audit of all prediction-level artifacts across
+the workspace was conducted.
+
+A. Artifact Inventory & Array Dimensions:
+  1. Clean Baseline (Steps 4.1–4.4):
+     - outputs/predictions/energy_only/test_predictions.npz
+       Keys: ['predictions_watts', 'actual_watts', 'predictions_scaled', 'actual_scaled']
+       Shapes: (587, 24) float32
+     - outputs/predictions/early_fusion/test_predictions.npz
+       Keys: ['predictions_watts', 'actual_watts', 'predictions_scaled', 'actual_scaled']
+       Shapes: (587, 24) float32
+     - outputs/predictions/late_fusion/test_predictions.npz
+       Keys: ['actual_watts', 'predicted_watts', 'actual_scaled', 'predicted_scaled', 'scaler_mean', 'scaler_std']
+       Shapes: (587, 24) float32
+     - outputs/predictions/hybrid_fusion/test_predictions.npz
+       Keys: ['actual_watts', 'predicted_watts', 'actual_scaled', 'predicted_scaled', 'scaler_mean', 'scaler_std']
+       Shapes: (587, 24) float32
+
+  2. Step 5A — 30% MCAR Missingness Experiment (16 files):
+     - outputs/robustness/missingness_30/predictions/{model}/{cond}_predictions.npz
+       for model in [energy_only, early_fusion, late_fusion, hybrid_fusion]
+       for cond in [NN, NA, AN, AA]
+       Keys (all 16 files): ['predictions_watts', 'actual_watts', 'predictions_scaled', 'actual_scaled']
+       Shapes: (587, 24) float32
+
+  3. Step 5B — 20% Additive Gaussian Noise Experiment (16 files):
+     - outputs/robustness/noise_20/predictions/{model}/{cond}_predictions.npz
+       for model in [energy_only, early_fusion, late_fusion, hybrid_fusion]
+       for cond in [NN, NA, AN, AA]
+       Keys (all 16 files): ['predictions_watts', 'actual_watts', 'predictions_scaled', 'actual_scaled']
+       Shapes: (587, 24) float32
+
+  4. Ground Truth Target Sequence Reference:
+     - data/processed/sequences/test/y.npz
+       Key: 'data', Shape: (587, 24) float32 (standardised space)
+     - outputs/models/scalers/scaler_metadata.json:
+       energy mean = 307.1706381642216 W, std = 147.99335957405128 W
+
+B. Target Consistency Verification:
+  - Ground truth targets (actual_watts) were compared across all 36 prediction
+    files against the reference sequence file unscaled using the frozen scaler.
+  - Maximum absolute difference: 0.00e+00 Watts across all 587 x 24 elements.
+  - Target identity is exact bitwise across every model, condition, and stage.
+
+C. Alignment Verification:
+  - Number of test windows: exactly 587 across all files.
+  - Multi-horizon forecast steps: exactly 24 horizons (t+1 to t+24) per window.
+  - Temporal span: 587 rolling forecast origins spanning 2023-12-08 14:00:00 to
+    2024-01-02 00:00:00, advancing with a stride of 1 hour.
+  - Clean N–N prediction identity:
+    Maximum absolute difference between Step 5A NN, Step 5B NN, and original
+    clean test predictions is <= 6.10e-05 Watts (within float32 round-off limit).
+  - Degraded predictions correspond to the exact same 587 test windows and
+    24 forecast horizons as the clean baseline.
+
+
+3. PAIRED-DATA REQUIREMENT & EXPERIMENTAL DESIGN
+--------------------------------------------------------------------------------
+All inferential comparisons in this project are strictly PAIRED.
+
+In this experiment:
+  - Every model generates forecasts for the exact same test sequence window i
+    (same 168-hour historical context, same weather conditions, same household).
+  - Every forecast targets the exact same ground truth value y_{i, h}.
+  - Under degradation (missingness or noise), the identical test window i is
+    degraded using the specified deterministic mask/perturbation.
+
+Consequences for statistical testing:
+  - Independent two-sample tests (e.g., standard two-sample t-test, Mann-Whitney
+    U test) are methodologically INVALID. They fail to account for the shared
+    target variance and the common temporal shocks across windows, substantially
+    inflating the variance of the difference estimator and sacrificing statistical
+    power.
+  - All comparisons MUST evaluate the distribution of paired differences:
+      D_i = Loss(Model_A, i) - Loss(Model_B, i)   [between-model comparison]
+    or
+      D_i = Loss(Degraded, i) - Loss(Clean, i)     [within-model robustness]
+  - By computing paired differences on identical windows, common household-level
+    seasonal fluctuations (e.g., base load vs cooking/heating spikes) cancel out,
+    isolating the true differential treatment effect.
+
+
+4. ERROR UNITS & THE DANGER OF PSEUDOREPLICATION
+--------------------------------------------------------------------------------
+We explicitly evaluated two candidate observational units:
+
+A. Candidate Unit 1: Individual Forecast Points (587 windows x 24 horizons = 14,088)
+   - In a multi-horizon vector forecast (t+1 to t+24) generated at origin t, all
+     24 predictions originate from a single forward pass of the recurrent neural
+     network, conditioned on the exact same hidden state h_t.
+   - The errors across horizons e_{i, 1}, e_{i, 2}, ..., e_{i, 24} are heavily
+     cross-correlated and share identical input perturbations.
+   - Treating 14,088 point forecasts as independent observations constitutes
+     classical PSEUDOREPLICATION (Hurlbert, 1984).
+   - Consequence: Artificially inflates nominal sample size by 24x, collapses
+     standard errors by sqrt(24) ≈ 4.9x, and generates spuriously tiny p-values
+     that violate statistical exchangeability.
+
+B. Candidate Unit 2: Per-Window Summary Loss (N = 587 observations)
+   - For each forecast origin i ∈ {1, ..., 587}:
+       MAE_{window, i} = (1 / 24) * sum_{h=1}^{24} |y_{i, h} - \hat{y}_{i, h}|
+   - This aggregates the multi-horizon error vector into a single scalar loss
+     per forecast origin.
+   - Critical Mathematical Property:
+       (1 / 587) * sum_{i=1}^{587} MAE_{window, i} ≡ Global Test MAE
+     The sample mean of the per-window MAE equals the audited test MAE
+     reported in Steps 4, 5A, 5B, and 6 down to the last decimal place:
+       Energy-Only   : 77.8823 W
+       Early Fusion  : 71.6360 W
+       Late Fusion   : 78.9042 W
+       Hybrid Fusion : 82.1862 W
+   - Recommendation: The PER-WINDOW MAE (N = 587) is the statistically
+     defensible PRIMARY observational unit.
+
+C. Secondary & Stratified Units:
+   - Secondary Unit: Per-Window RMSE:
+       RMSE_{window, i} = sqrt( (1 / 24) * sum_{h=1}^{24} (y_{i, h} - \hat{y}_{i, h})^2 )
+   - Horizon-Stratified Breakdown:
+     In addition to the primary per-window analysis, paired tests will be run
+     separately at each specific horizon h ∈ {1, 2, ..., 24} across the 587
+     windows to examine how degradation sensitivity evolves over lead time.
+
+
+5. PRIMARY INFERENTIAL TEST SELECTION
+--------------------------------------------------------------------------------
+We evaluated three candidate paired statistical tests for per-window losses:
+
+A. Paired Student's t-test:
+   - Assumes that paired differences D_i = Loss_{A, i} - Loss_{B, i} are normally
+     distributed.
+   - Empirical check on test data: Energy forecast errors are right-skewed,
+     heavy-tailed, and subject to bursty consumption peaks. Paired differences
+     frequently violate normality (Shapiro-Wilk p < 1e-10).
+   - Vulnerable to outlier distortion.
+
+B. Wilcoxon Signed-Rank Test (RECOMMENDED PRIMARY):
+   - Non-parametric rank-based test evaluating whether the distribution of
+     paired differences is symmetric around zero.
+   - Does not require normality of differences.
+   - Robust against extreme consumption outliers and heavy-tailed errors.
+   - Well-suited for N = 587 paired observations.
+
+C. Paired Permutation / Randomization Test (RECOMMENDED SENSITIVITY CHECK):
+   - Distribution-free exact/Monte Carlo test (B = 10,000 resamples) based on
+     random sign-flipping of paired differences under the sharp null hypothesis
+     H_0: D_i = -D_i.
+   - Directly tests the difference in sample means without distributional
+     assumptions.
+   - Serves as the primary sensitivity check to confirm Wilcoxon conclusions.
+
+
+6. EVALUATION OF THE DIEBOLD-MARIANO TEST
+--------------------------------------------------------------------------------
+The Diebold-Mariano (DM, 1995) and Harvey-Leybourne-Newbold (HLN, 1997) tests
+are standard benchmarks in econometric forecasting for comparing two forecast
+series. However, their application to our specific experimental setup requires
+careful methodological consideration:
+
+A. Nature of the Forecasting Setup:
+   - The test set consists of 587 rolling forecast windows with a stride of 1 hour.
+   - Each window forecasts 24 hours ahead (H = 24).
+   - Consequently, window i and window i+1 share 23 forecast hours in their
+     target ground truth, and share 167 hours of input history.
+   - Therefore, the loss differential series d_t = Loss(Model 1, t) - Loss(Model 2, t)
+     exhibits substantial serial autocorrelation up to lag k = 23 (and potentially
+     further due to autoregressive household behavior).
+
+B. Limitations of Conventional DM:
+   - A standard DM test without HAC (Heteroskedasticity and Autocorrelation
+     Consistent) spectral variance estimation would drastically underestimate
+     the variance of the mean loss differential, yielding inflated test
+     statistics.
+   - The DM test assumes covariance stationarity of the loss differential
+     series d_t. In real household data collected across December (winter heating,
+     Christmas/New Year schedule shifts), error variances are time-varying
+     (seasonally non-stationary).
+
+C. Methodological Recommendation:
+   - Do NOT use conventional uncorrected DM as the sole primary test.
+   - Implement the Modified Diebold-Mariano (HLN) test with Newey-West HAC
+     spectral covariance estimator with lag truncation parameter k = 24 (equal
+     to the multi-step horizon length) as an ECONOMETRIC COMPLEMENTARY TEST.
+   - Report both the Wilcoxon signed-rank test (evaluating cross-sectional
+     window-level dominance) and the HLN DM test (evaluating time-series
+     loss differential persistence with HAC correction).
+
+
+7. MULTIPLE TESTING CORRECTION & HYPOTHESIS FAMILIES
+--------------------------------------------------------------------------------
+Because multiple models, conditions, and degradation modes are tested, running
+many uncorrected pairwise tests creates a severe risk of Family-Wise Type I
+error inflation.
+
+A. Enumeration of Planned Pairwise Comparisons:
+   1. Family 1: Clean Model Comparisons (N–N)
+      4 models -> 6 pairwise comparisons (EF vs EO, LF vs EO, HF vs EO, EF vs LF, EF vs HF, LF vs HF)
+   2. Family 2: Model Comparisons Under Missingness (3 conditions x 6 pairs = 18 comparisons)
+      - N–A: 6 pairs
+      - A–N: 6 pairs
+      - A–A: 6 pairs
+   3. Family 3: Model Comparisons Under Noise (3 conditions x 6 pairs = 18 comparisons)
+      - N–A: 6 pairs
+      - A–N: 6 pairs
+      - A–A: 6 pairs
+   4. Family 4: Within-Model Degradation Impact — Missingness
+      4 models x 3 conditions (NA vs NN, AN vs NN, AA vs NN) = 12 comparisons
+   5. Family 5: Within-Model Degradation Impact — Noise
+      4 models x 3 conditions (NA vs NN, AN vs NN, AA vs NN) = 12 comparisons
+   6. Family 6: Cross-Degradation Comparison (Missingness vs Noise)
+      For each model and condition, compare paired degradation delta = 12 comparisons
+
+   Total planned pairwise inferential comparisons: 78 tests.
+
+B. Correction Strategy:
+   - Universal Bonferroni across all 78 tests (alpha / 78 = 0.00064) would be
+     unduly conservative, conflating distinct research questions into a single
+     omnibus penalty.
+   - Recommended Strategy: Structured Family-Wise Error Rate Control.
+     1. Primary Correction: HOLM-BONFERRONI step-down procedure applied
+        INDIVIDUALLY within each of the 6 pre-specified hypothesis families.
+        This guarantees strong control of the FWER at alpha = 0.05 within each
+        coherent experimental domain.
+     2. Global Secondary Audit: BENJAMINI-HOCHBERG (BH) False Discovery Rate
+        (FDR) procedure applied across all 78 pooled tests at q = 0.05 to
+        verify which discoveries survive false-discovery control.
+
+
+8. EFFECT SIZE REPORTING & CONFIDENCE INTERVALS
+--------------------------------------------------------------------------------
+Statistical significance (p-values) must be paired with effect sizes to
+determine practical, physical engineering relevance.
+
+For each paired comparison, the following effect size metrics will be reported:
+
+A. Median Paired Difference (Watts):
+   - median(D_i) = median(Loss_{A, i} - Loss_{B, i})
+   - Invariant to outlier spikes; directly interpretable in household power units.
+
+B. Mean Paired Difference (Watts):
+   - mean(D_i) = mean(Loss_{A, i} - Loss_{B, i})
+   - Exactly reflects the delta in global test MAE.
+
+C. Relative Paired Difference (%):
+   - (mean(D_i) / mean(Loss_{ref})) * 100%
+
+D. Rank-Biserial Correlation (r_rb):
+   - Effect size metric for the Wilcoxon signed-rank test:
+       r_rb = (W^+ - W^-) / (W^+ + W^-)
+   - Constrained to [-1.0, +1.0].
+   - Interpretation:
+       r_rb = +1.0: Model A has strictly lower error than Model B in 100% of ranked pairs.
+       r_rb = 0.0:  Equal distribution of positive and negative ranks.
+
+E. Standardised Paired Effect Size (Cohen's d_z):
+   - d_z = mean(D_i) / std(D_i)
+
+F. 95% Confidence Intervals:
+   - Non-parametric BCa (bias-corrected and accelerated) bootstrap 95%
+     confidence intervals with B = 10,000 resamples for both the mean and
+     median paired differences.
+
+
+9. COMPLETE COMPARISON MATRIX
+--------------------------------------------------------------------------------
+The full inferential test plan comprises 78 pairwise comparisons:
+
+A. Between-Model Comparisons (42 tests):
+   For each condition C in [Clean (NN), Miss-NA, Miss-AN, Miss-AA, Noise-NA, Noise-AN, Noise-AA] (7 regimes):
+     1. Early Fusion vs Energy-Only
+     2. Late Fusion vs Energy-Only
+     3. Hybrid Fusion vs Energy-Only
+     4. Early Fusion vs Late Fusion
+     5. Early Fusion vs Hybrid Fusion
+     6. Late Fusion vs Hybrid Fusion
+
+B. Within-Model Robustness Comparisons (24 tests):
+   For each model M in [Energy-Only, Early Fusion, Late Fusion, Hybrid Fusion]:
+     - Missingness:
+       1. M(NA) vs M(NN) [Weather missingness impact]
+       2. M(AN) vs M(NN) [Electricity missingness impact]
+       3. M(AA) vs M(NN) [Joint missingness impact]
+     - Noise:
+       4. M(NA) vs M(NN) [Weather noise impact]
+       5. M(AN) vs M(NN) [Electricity noise impact]
+       6. M(AA) vs M(NN) [Joint noise impact]
+
+C. Cross-Degradation Comparisons (12 tests):
+   To test whether missingness degrades performance significantly more than
+   noise without violating independence:
+   For each model M and condition C in [NA, AN, AA]:
+     For each window i, define:
+       Delta_Miss_{M, C, i}  = Loss(M, Miss, C, i)  - Loss(M, Clean, NN, i)
+       Delta_Noise_{M, C, i} = Loss(M, Noise, C, i) - Loss(M, Clean, NN, i)
+       D_{cross, i} = Delta_Miss_{M, C, i} - Delta_Noise_{M, C, i}
+                    ≡ Loss(M, Miss, C, i) - Loss(M, Noise, C, i)
+     Since both experiments were executed on the exact same 587 test windows,
+     D_{cross, i} is a STRICTLY PAIRED DIFFERENCE per window i!
+     This allows a rigorous paired test of H_0: Delta_Miss = Delta_Noise.
+
+
+10. METRIC HIERARCHY (AVOIDING MULTIPLICITY INFLATION)
+--------------------------------------------------------------------------------
+To prevent "metric cherry-picking" and testing inflation:
+
+A. PRIMARY Inferential Metric:
+   - Per-Window MAE (Watts)
+   - Reason: Natural, robust, linear metric in original physical power units.
+     Averages exactly to the audited global benchmark MAE. All primary
+     hypothesis testing decisions will be based strictly on this metric.
+
+B. SECONDARY Inferential Metric:
+   - Per-Window RMSE (Watts)
+   - Reason: Standard quadratic penalty metric. Used to verify whether
+     conclusions hold under higher sensitivity to large forecast deviations.
+
+C. DESCRIPTIVE-ONLY Metrics (No hypothesis testing):
+   - R-squared (R^2):
+     R^2 is a global variance ratio. When calculated on a short 24-hour window,
+     the denominator (local ground truth variance) can be near zero, causing
+     numerical instability and catastrophic negative spikes (-10^4). It cannot
+     serve as an observational unit for paired testing.
+   - MAPE (%) & sMAPE (%):
+     Reported as descriptive summary statistics only. Clamping thresholds
+     distort distribution properties for rank tests.
+
+
+11. DATA LEAKAGE & VALIDITY AUDIT CHECKLIST
+--------------------------------------------------------------------------------
+Audit item                                  Status    Verification Evidence
+--------------------------------------------------------------------------------
+1. Identical test windows across models     VERIFIED  587 windows, origins 2023-12-08 to 2024-01-02
+2. Identical ground truth y_true            VERIFIED  Max diff = 0.00e+00 W across all 36 files
+3. Identical 24h horizon alignment          VERIFIED  t+1 to t+24 strictly matched across all files
+4. Calibration set isolation                VERIFIED  Cal partition (586 windows) untouched
+5. Training set isolation                   VERIFIED  Train data (6,943 hours) strictly pre-2023-09-23
+6. Validation set isolation                 VERIFIED  Val data (1,157 hours) strictly pre-2023-11-23
+7. No future weather leakage                VERIFIED  Input features strictly historical (t-167 to t)
+8. No test-set model selection              VERIFIED  Model hyperparameters frozen in Step 4
+9. Checkpoints unchanged                    VERIFIED  SHA-256 hashes matched original Step 4 hashes
+10. Degradation masks reproducible          VERIFIED  Deterministic seeds 42 and 1042 verified
+11. Energy-only control identities          VERIFIED  Max |NN - NA| = 0.00 W, Max |AN - AA| = 0.00 W
+
+
+12. PROPOSED FINAL STATISTICAL PROTOCOL SUMMARY
+--------------------------------------------------------------------------------
+Parameter                             Specification
+--------------------------------------------------------------------------------
+Primary Observational Unit            Per-window MAE across 24 horizons (N = 587)
+Primary Metric                        Mean Absolute Error in Watts
+Primary Paired Test                   Two-sided Wilcoxon Signed-Rank Test
+Secondary / Sensitivity Tests         1. Paired Permutation Test (10,000 resamples)
+                                      2. Paired Student's t-test
+                                      3. Modified Diebold-Mariano (HLN) with Newey-West HAC (k = 24)
+Primary Effect Size                   Median paired difference in Watts & Rank-biserial correlation (r_rb)
+Secondary Effect Size                 Mean paired difference in Watts & Cohen's d_z
+Confidence Intervals                  95% BCa Bootstrap Confidence Intervals (10,000 resamples)
+Multiple-Testing Correction           1. Primary: Holm-Bonferroni within each of the 6 hypothesis families
+                                      2. Secondary: Benjamini-Hochberg FDR (q = 0.05) across all 78 tests
+Nominal Significance Threshold        alpha = 0.05 (two-tailed)
+Treatment of Forecast Horizons        Aggregated to window loss; supplementary per-horizon breakdown (h=1..24)
+Treatment of Temporal Dependence      HAC Newey-West lag truncation k=24 in HLN test; block resampling audit
+Treatment of Overlapping Windows      Documented limitation; paired differences cancel common level shifts
+Missingness vs Noise Formulation      Paired difference of per-window degradation deltas on identical windows
+================================================================================
+
+
+13. STEP 7 PLANNING STATUS & NEXT ACTIONS
+--------------------------------------------------------------------------------
+STEP 7 PLANNING STATUS: COMPLETE
+
+Summary of Audited Items:
+  - Prediction files inspected: 36 test prediction files (4 clean + 16 Step 5A + 16 Step 5B)
+  - Ground truth reference inspected: data/processed/sequences/test/y.npz
+  - Alignment status: 100% aligned across windows, horizons, targets, and models
+  - Recommended statistical unit: Per-Window MAE (N = 587)
+  - Recommended primary test: Two-sided Wilcoxon signed-rank test
+  - Recommended sensitivity checks: Paired permutation test (B = 10,000) & HLN-DM (HAC k=24)
+  - Recommended effect-size method: Median paired diff (Watts), Mean paired diff (Watts), Rank-biserial (r_rb)
+  - Recommended multiple-testing method: Family-wise Holm-Bonferroni correction (primary) + BH FDR (secondary)
+  - Unresolved issues: None. All prerequisite data and structures are completely verified.
+
+Exact Next Command / Task Required to Execute the Approved Analysis:
+  When approved by the user, execute:
+    python src/analysis/run_statistical_tests.py
+  (which will implement the 78 paired Wilcoxon tests, permutation tests, HLN-DM tests,
+   Holm adjustments, bootstrap CIs, and output tables to outputs/robustness/step7_analysis/
+   and a comprehensive statistical report to outputs/reports/step7_statistical_analysis_report.txt).
+================================================================================

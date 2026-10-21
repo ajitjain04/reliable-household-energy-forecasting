@@ -1,0 +1,7 @@
+model,sample_count,mae_watts,rmse_watts,r2,smape_pct,mape_pct,delta_mae_vs_persistence_watts,relative_delta_pct,modality_assumption,deployable_in_real_operation
+Persistence,404,111.4794,142.7632,-1.032978,57.4836,71.8836,0.0,0.0,Contemporaneous lookback only,YES
+Daily Seasonal-Naive,404,107.6017,139.3235,-0.936192,56.0597,71.3344,-3.8777,-3.48,Contemporaneous lookback only,YES
+Weekly Seasonal-Naive,404,99.8505,130.7568,-0.705408,50.7838,72.4746,-11.6289,-10.43,Contemporaneous lookback only,YES
+Energy-Only LSTM (Recursive),404,104.013,120.5678,-0.449981,51.9323,85.726,-7.4664,-6.7,Contemporaneous lookback only,YES
+Early Fusion (Persisted Weather),404,90.9979,108.8685,-0.182236,47.1529,69.7417,-20.4815,-18.37,Contemporaneous lookback only,YES
+Early Fusion (Oracle Weather Leakage),404,83.2552,99.9555,0.003417,44.0723,64.5455,-28.2242,-25.32,FATAL LEAKAGE: Actual future weather,NO (Leaked Weather)

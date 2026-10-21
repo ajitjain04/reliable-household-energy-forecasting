@@ -1,0 +1,158 @@
+================================================================================
+STEP 5A — CONTROLLED 30% MCAR MISSINGNESS EXPERIMENT REPORT
+Reliable Multimodal Household Energy Forecasting
+================================================================================
+
+Generated: 2026-10-05 11:09:28
+
+--------------------------------------------------------------------------------
+1. EXPERIMENTAL OBJECTIVE
+--------------------------------------------------------------------------------
+
+  Research question: How does multimodal household energy forecasting
+  behave when one or both input modalities become unreliable?
+
+  This experiment evaluates four frozen LSTM forecasting models under
+  controlled input missingness using a 2×2 reliability framework.
+
+--------------------------------------------------------------------------------
+2. MISSINGNESS DEFINITION
+--------------------------------------------------------------------------------
+
+  Type:                MCAR (Missing Completely At Random)
+  Scope:               Timestep-level masking
+  Severity:            30% (exactly 50 of 168 timesteps per sample)
+  Representation:      0.0 in standardized space (training mean imputation)
+  Electricity masking: All 1 energy feature at masked timesteps → 0.0
+  Weather masking:     All 7 weather features at masked timesteps → 0.0
+
+  IMPORTANT: 0.0 in standardized space represents the training mean,
+  NOT zero watts or zero degrees. The models were trained using
+  StandardScaler normalization where z = (x - μ_train) / σ_train.
+
+--------------------------------------------------------------------------------
+3. RANDOM SEEDS & MASK GENERATION
+--------------------------------------------------------------------------------
+
+  Electricity mask seed:  42
+  Weather mask seed:      1042
+  Masks generated:        ONCE, shared across all four models
+  A–A independence:       Independent masks (different seeds)
+  Mask shape:             (587, 168), dtype=bool
+  Masked timesteps/row:   50 (exact)
+
+--------------------------------------------------------------------------------
+4. TEST PARTITION
+--------------------------------------------------------------------------------
+
+  Test windows:           587
+  History length:         168 hours
+  Forecast horizon:       24 hours
+  Target modified:        NO (identical across all conditions)
+
+--------------------------------------------------------------------------------
+5. INTEGRITY CHECKS
+--------------------------------------------------------------------------------
+
+  [PASS] clean_test_sequences_exist
+  [PASS] all_targets_identical
+  [PASS] model_checkpoints_exist
+  [PASS] scalers_exist
+  [PASS] test_sample_count_587
+  [PASS] energy_mask_shape_correct
+  [PASS] weather_mask_shape_correct
+  [PASS] energy_mask_50_per_row
+  [PASS] weather_mask_50_per_row
+  [PASS] clean_predictions_preserved
+  [PASS] no_retraining_occurred
+  [PASS] all_four_models_evaluated
+  [PASS] all_four_conditions_evaluated
+  [PASS] no_future_information
+  [PASS] clean_reports_preserved
+
+--------------------------------------------------------------------------------
+6. RESULTS — ALL MODELS × ALL CONDITIONS
+--------------------------------------------------------------------------------
+
+  Model            Condition        MAE(W)   RMSE(W)         R²    MAPE%   sMAPE%
+  -------------------------------------------------------------------------
+  Energy-Only      NN                77.88     93.36   0.129621    56.01    39.39
+  Energy-Only      NA                77.88     93.36   0.129621    56.01    39.39
+  Energy-Only      AN                87.01    102.29  -0.044884    64.57    42.87
+  Energy-Only      AA                87.01    102.29  -0.044884    64.57    42.87
+
+  Early Fusion     NN                71.64     88.56   0.216874    48.58    36.48
+  Early Fusion     NA                71.81     88.56   0.216871    48.66    36.55
+  Early Fusion     AN                75.20     91.95   0.155823    53.12    37.97
+  Early Fusion     AA                76.39     92.80   0.140042    54.24    38.48
+
+  Late Fusion      NN                78.90     95.07   0.097459    52.46    39.92
+  Late Fusion      NA                79.55     95.38   0.091501    53.46    40.21
+  Late Fusion      AN                82.30     97.70   0.046898    56.98    41.38
+  Late Fusion      AA                83.14     98.28   0.035547    58.09    41.72
+
+  Hybrid Fusion    NN                82.19     98.08   0.039488    56.35    41.39
+  Hybrid Fusion    NA                82.55     98.22   0.036679    56.94    41.54
+  Hybrid Fusion    AN                84.07     99.65   0.008427    58.74    42.15
+  Hybrid Fusion    AA                84.61     99.95   0.002370    59.49    42.37
+
+--------------------------------------------------------------------------------
+7. ROBUSTNESS DEGRADATION — RELATIVE TO N–N CLEAN REFERENCE
+--------------------------------------------------------------------------------
+
+  Positive ΔMAE/ΔRMSE = worse performance (higher error).
+  Negative ΔR² = worse performance (lower explained variance).
+
+  Model            Condition        ΔMAE(W)    ΔMAE%   ΔRMSE(W)   ΔRMSE%        ΔR²
+  ---------------------------------------------------------------------------
+  Energy-Only      NA                 +0.00    +0.0%      +0.00    +0.0%  +0.000000
+  Energy-Only      AN                 +9.13   +11.7%      +8.93    +9.6%  -0.174505
+  Energy-Only      AA                 +9.13   +11.7%      +8.93    +9.6%  -0.174505
+
+  Early Fusion     NA                 +0.17    +0.2%      +0.00    +0.0%  -0.000003
+  Early Fusion     AN                 +3.56    +5.0%      +3.39    +3.8%  -0.061051
+  Early Fusion     AA                 +4.76    +6.6%      +4.24    +4.8%  -0.076832
+
+  Late Fusion      NA                 +0.65    +0.8%      +0.31    +0.3%  -0.005958
+  Late Fusion      AN                 +3.40    +4.3%      +2.63    +2.8%  -0.050561
+  Late Fusion      AA                 +4.24    +5.4%      +3.21    +3.4%  -0.061912
+
+  Hybrid Fusion    NA                 +0.36    +0.4%      +0.14    +0.1%  -0.002809
+  Hybrid Fusion    AN                 +1.89    +2.3%      +1.57    +1.6%  -0.031061
+  Hybrid Fusion    AA                 +2.42    +3.0%      +1.88    +1.9%  -0.037118
+
+--------------------------------------------------------------------------------
+8. ENERGY-ONLY N–A CONTROL RESULT
+--------------------------------------------------------------------------------
+
+  CONTROL PASSED: Energy-only N–A predictions are IDENTICAL to N–N.
+  This confirms that weather degradation has zero effect on the
+  energy-only model, as expected (it does not receive weather input).
+
+--------------------------------------------------------------------------------
+9. DATA INTEGRITY & AUDIT STATEMENT
+--------------------------------------------------------------------------------
+
+  - Clean test sequences remain unchanged (verified via SHA-256 hashes).
+  - Clean test targets are identical across all four conditions.
+  - Model checkpoints were loaded read-only; no retraining occurred.
+  - Scalers remain read-only; no refitting occurred.
+  - Train, validation, and calibration data were not loaded or modified.
+  - Degraded inputs were generated into a separate directory.
+  - Clean predictions and reports were not overwritten.
+  - No future weather information was introduced.
+  - No model architecture changes were made.
+
+--------------------------------------------------------------------------------
+10. OUTPUT LOCATIONS
+--------------------------------------------------------------------------------
+
+  Masks:          E:\reliable-household-energy-forecasting\data\processed\degraded\missingness_30
+  Predictions:    E:\reliable-household-energy-forecasting\outputs\robustness\missingness_30\predictions
+  Metrics:        E:\reliable-household-energy-forecasting\outputs\robustness\missingness_30\metrics
+  Figures:        E:\reliable-household-energy-forecasting\outputs\robustness\missingness_30\figures
+  Report:         E:\reliable-household-energy-forecasting\outputs\robustness\missingness_30\reports
+
+================================================================================
+END OF STEP 5A REPORT
+================================================================================

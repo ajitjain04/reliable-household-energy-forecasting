@@ -1,0 +1,69 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+id_rsa
+id_ed25519
+
+# Local databases and SQLite sidecars
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Local temporary and audit files
+scratch/
+*.log
+logs/
+tmp/
+temp/
+
+# Frontend dependencies and generated builds
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+*.tsbuildinfo
+
+# Raw and regenerable datasets
+data/raw/*
+data/interim/*
+data/processed/*
+
+# Preserve tracked research and inference artifacts
+# (Do not ignore outputs/models, reports, tables, figures, XAI,
+# robustness, or uncertainty artifacts.)
+# Local bill-test fixtures pending privacy verification
+backend/tests/fixtures/
+
+# Private or unverified bill-test fixtures
+backend/tests/fixtures/

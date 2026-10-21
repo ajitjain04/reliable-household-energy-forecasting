@@ -1,0 +1,5 @@
+model,calibration_mae_watts,conformal_quantile_qh_mean_watts,mpiw_watts,clean_picp_pct,clean_ace_pct,clean_winkler_interval_score,miss_NA_picp_pct,miss_AN_picp_pct,miss_AA_picp_pct,miss_AA_winkler_score,noise_AA_picp_pct,noise_AA_winkler_score,oracle_mpiw_miss_AA_watts,oracle_width_expansion_req_pct
+Energy-Only,70.22,133.563,267.126,86.39,3.61,361.0266,86.39,79.92,79.92,399.393,86.11,364.0,318.2365,19.13
+Early Fusion,68.2,134.1278,268.2557,88.56,1.44,360.6538,88.86,85.85,85.75,369.8812,88.58,360.617,294.6009,9.82
+Late Fusion,76.46,143.2988,286.5975,89.84,0.16,382.9557,89.79,88.71,88.42,374.9805,89.79,383.0078,295.0967,2.97
+Hybrid Fusion,77.34,142.1306,284.2612,88.47,1.53,380.7939,88.25,87.05,86.84,378.1032,88.41,380.7415,299.4728,5.35

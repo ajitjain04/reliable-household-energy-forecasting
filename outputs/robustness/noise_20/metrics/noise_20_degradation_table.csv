@@ -1,0 +1,17 @@
+model,condition,delta_mae_watts,relative_mae_pct,delta_rmse_watts,relative_rmse_pct,delta_r2,relative_r2_pct
+energy_only,NN,0.0,0.0,0.0,0.0,0.0,0.0
+energy_only,NA,0.0,0.0,0.0,0.0,0.0,0.0
+energy_only,AN,0.4353,0.56,0.5045,0.54,-0.009433,-7.28
+energy_only,AA,0.4353,0.56,0.5045,0.54,-0.009433,-7.28
+early_fusion,NN,0.0,0.0,0.0,0.0,0.0,0.0
+early_fusion,NA,0.0647,0.09,0.0507,0.06,-0.000896,-0.41
+early_fusion,AN,0.0073,0.01,-0.0111,-0.01,0.000197,0.09
+early_fusion,AA,0.092,0.13,0.058,0.07,-0.001026,-0.47
+late_fusion,NN,0.0,0.0,0.0,0.0,0.0,0.0
+late_fusion,NA,0.0196,0.02,0.0115,0.01,-0.000219,-0.22
+late_fusion,AN,0.0809,0.1,0.0709,0.07,-0.001348,-1.38
+late_fusion,AA,0.1006,0.13,0.0836,0.09,-0.001589,-1.63
+hybrid_fusion,NN,0.0,0.0,0.0,0.0,0.0,0.0
+hybrid_fusion,NA,0.005,0.01,0.0028,0.0,-5.4e-05,-0.14
+hybrid_fusion,AN,0.0273,0.03,0.0154,0.02,-0.0003,-0.76
+hybrid_fusion,AA,0.0326,0.04,0.019,0.02,-0.000371,-0.94

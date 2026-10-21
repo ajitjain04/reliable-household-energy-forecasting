@@ -1,0 +1,19 @@
+model,experiment,condition,clean_electricity_share_pct,degraded_electricity_share_pct,delta_electricity_share_pct_points,clean_weather_share_pct,degraded_weather_share_pct,delta_weather_share_pct_points,delta_electricity_density_share_pct_points
+Early Fusion,missingness,NA,33.1,41.24,8.14,66.9,58.76,-8.14,5.84
+Early Fusion,missingness,AN,33.1,25.39,-7.71,66.9,74.61,7.71,-7.62
+Early Fusion,missingness,AA,33.1,32.52,-0.58,66.9,67.48,0.58,-0.59
+Early Fusion,noise,NA,33.1,32.91,-0.19,66.9,67.09,0.19,-0.15
+Early Fusion,noise,AN,33.1,33.31,0.22,66.9,66.69,-0.22,0.22
+Early Fusion,noise,AA,33.1,33.12,0.02,66.9,66.88,-0.02,0.07
+Late Fusion,missingness,NA,53.27,58.15,4.88,46.73,41.85,-4.88,1.86
+Late Fusion,missingness,AN,53.27,44.48,-8.79,46.73,55.52,8.79,-4.57
+Late Fusion,missingness,AA,53.27,49.32,-3.95,46.73,50.68,3.95,-2.16
+Late Fusion,noise,NA,53.27,53.08,-0.19,46.73,46.92,0.19,-0.08
+Late Fusion,noise,AN,53.27,53.48,0.21,46.73,46.52,-0.21,0.09
+Late Fusion,noise,AA,53.27,53.29,0.02,46.73,46.71,-0.02,0.01
+Hybrid Fusion,missingness,NA,45.19,50.96,5.76,54.81,49.04,-5.76,2.75
+Hybrid Fusion,missingness,AN,45.19,36.79,-8.4,54.81,63.21,8.4,-5.56
+Hybrid Fusion,missingness,AA,45.19,42.2,-2.99,54.81,57.8,2.99,-2.09
+Hybrid Fusion,noise,NA,45.19,45.03,-0.17,54.81,54.97,0.17,-0.09
+Hybrid Fusion,noise,AN,45.19,45.44,0.24,54.81,54.56,-0.24,0.13
+Hybrid Fusion,noise,AA,45.19,45.27,0.08,54.81,54.73,-0.08,0.05

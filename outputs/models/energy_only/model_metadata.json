@@ -1,0 +1,37 @@
+{
+  "model_name": "EnergyOnlyLSTM",
+  "step": "4.1",
+  "architecture": {
+    "input_size": 1,
+    "hidden_size": 64,
+    "num_layers": 2,
+    "dropout": 0.2,
+    "forecast_horizon": 24
+  },
+  "exact_trainable_parameters": 51992,
+  "training": {
+    "optimizer": "Adam",
+    "learning_rate": 0.001,
+    "loss_function": "MSELoss",
+    "batch_size": 64,
+    "max_epochs": 50,
+    "early_stopping_patience": 7,
+    "seed": 42,
+    "device": "cpu",
+    "total_epochs_run": 23,
+    "best_epoch": 16,
+    "best_val_loss": 0.463111,
+    "training_time_seconds": 205.2
+  },
+  "data": {
+    "train_samples": 3816,
+    "validation_samples": 881,
+    "history_length": 168,
+    "forecast_horizon": 24,
+    "features_used": [
+      "hourly_active_power"
+    ],
+    "weather_used": false
+  },
+  "timestamp": "2026-09-14T00:02:55.565178"
+}

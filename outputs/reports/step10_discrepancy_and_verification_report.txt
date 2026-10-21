@@ -1,0 +1,129 @@
+================================================================================
+STEP 10 — DISCREPANCY AND AUDIT VERIFICATION REPORT
+Reliable Multimodal Household Energy Forecasting Under Degraded Weather Information
+================================================================================
+Generated: 2026-10-10 20:26:00
+Status: COMPLETE — Comprehensive Verification Across Steps 4–9 Artifacts
+
+--------------------------------------------------------------------------------
+1. SUMMARY OF REVIEW OBJECTIVES
+--------------------------------------------------------------------------------
+A pre-application review of the Step 10 synthesis was conducted against original
+audited Step 4–9 reports, PyTorch model definitions, and underlying CSV tables.
+This audit targeted five core areas:
+  1. Verification of trainable parameter counts for all four architectures.
+  2. Verification of exact statistical test p-values, effect sizes, and decisions.
+  3. Replacement of unsupported causal statements regarding fusion model overfitting.
+  4. Review and rigorous reformulation of the "up to 74x" missingness-vs-noise claim.
+  5. End-to-end verification of all numerical values across experimental steps.
+
+--------------------------------------------------------------------------------
+2. ITEMIZED DISCREPANCY LOG & RESOLUTION STATUS
+--------------------------------------------------------------------------------
+
+ITEM 1: Trainable Parameter Counts
+  - Context: Initial Step 10 draft cited parameter counts of:
+      * Energy-Only: 51,992
+      * Early Fusion: 68,760  [DISCREPANCY]
+      * Late Fusion: 104,088   [DISCREPANCY]
+      * Hybrid Fusion: 107,672 [DISCREPANCY]
+  - Audited Source of Truth:
+      * energy_only_baseline_report.txt (Line 19): 51,992
+      * early_fusion_report.txt (Line 20): 53,784
+      * late_fusion_report.txt (Line 21): 112,216
+      * hybrid_fusion_report.txt (Line 22): 145,496
+      * PyTorch layer-by-layer enumeration: Confirmed exactly matches Step 4 reports.
+  - Root Cause Analysis: The draft values in the initial Step 10 table were preliminary
+    rough estimates. The audited Step 4 architecture reports and exact PyTorch parameter
+    counts are the ground truth.
+  - Corrected Values:
+      * Energy-Only LSTM: 51,992
+      * Early Fusion LSTM: 53,784
+      * Late Fusion LSTM: 112,216
+      * Hybrid Fusion LSTM: 145,496
+  - Resolution Status: RESOLVED in revised artifacts (step10_clean_benchmark_comparison_revised.csv
+    and step10_final_research_synthesis_report_revised.txt).
+
+ITEM 2: Exact Statistical P-Values & HLN-DM Reporting
+  - Context: In the initial Step 10 summary table, several p-values were summarized with
+    shorthand notation (< 1e-16) rather than reporting exact test statistics.
+  - Audited Source of Truth: all_78_pairwise_tests_full.csv (Step 7 master table).
+  - Corrected Reporting:
+      * Family 1 Clean Early vs Energy: Mean Diff = -6.2463 W [-7.0532, -5.4851],
+        Wilcoxon W = 31189.0, p_raw = 1.7032e-28, p_holm = 8.5159e-28, HLN-DM stat = -3.6934, p_hln = 2.4503e-04.
+      * Family 1 Clean Late vs Energy: Mean Diff = +1.0219 W [0.0151, 1.9961],
+        Wilcoxon W = 79930.0, p_raw = 0.1197, p_holm = 0.1197, HLN-DM stat = 0.8878, p_hln = 0.3751 (Not Significant).
+      * Family 1 Clean Hybrid vs Energy: Mean Diff = +4.3039 W [3.4566, 5.1202],
+        Wilcoxon W = 43343.0, p_raw = 1.1668e-25, p_holm = 4.6672e-25, HLN-DM stat = 4.0955, p_hln = 4.8690e-05.
+      * Family 1 Clean Early vs Late: Mean Diff = -7.2682 W [-8.0401, -6.4093],
+        Wilcoxon W = 24263.0, p_raw = 2.2346e-38, p_holm = 1.3408e-37, HLN-DM stat = -5.2078, p_hln = 2.7594e-07.
+      * Family 1 Clean Early vs Hybrid: Mean Diff = -10.5502 W [-11.4502, -9.6010],
+        Wilcoxon W = 16275.0, p_raw = 6.4258e-52, p_holm = 3.8555e-51, HLN-DM stat = -6.4526, p_hln = 2.7020e-10.
+      * Family 1 Clean Late vs Hybrid: Mean Diff = -3.2820 W [-3.8522, -2.7632],
+        Wilcoxon W = 51145.0, p_raw = 3.8646e-18, p_holm = 1.1594e-17, HLN-DM stat = -2.5539, p_hln = 1.0924e-02.
+  - Resolution Status: RESOLVED in step10_statistical_significance_summary_revised.csv
+    and step10_final_research_synthesis_report_revised.txt.
+
+ITEM 3: Unsupported Causal Statements Regarding Overfitting
+  - Context: The initial text contained statements such as "isolated modal encoders
+    failed to extract more predictive cross-modal dynamics than simple joint early
+    concatenation" and "Late and Hybrid Fusion exhibited overfitting to training dynamics".
+  - Audited Source of Truth: Empirical observations show that Late Fusion (test MAE 78.90 W)
+    and Hybrid Fusion (test MAE 82.19 W) had higher test errors than Early Fusion (71.64 W)
+    and Energy-Only (77.88 W), despite comparable validation errors (77.25 W to 80.24 W).
+    Attributing this to specific latent mechanisms or asserting definitive causes exceeds
+    the direct evidence.
+  - Corrected Scientific Wording: Replaced causal assertions with cautious descriptions of
+    the empirical findings. Formulated as: "In this benchmark, the decoupled multimodal
+    architectures (Late Fusion and Hybrid Fusion) did not yield lower test forecast errors
+    than Early Fusion or the unimodal baseline. While all four models achieved comparable
+    validation MAE during checkpoint selection (77.25 W to 80.24 W), Late Fusion and Hybrid
+    Fusion exhibited higher out-of-sample test MAE (78.90 W and 82.19 W, respectively),
+    indicating that their additional architectural capacity and separate modal recurrent
+    encoders did not translate into improved out-of-sample generalization under this setup."
+  - Resolution Status: RESOLVED in step10_final_research_synthesis_report_revised.txt.
+
+ITEM 4: Missingness-versus-Noise "up to 74x" Multiplier Claim
+  - Context: Initial draft highlighted that missingness caused "up to 74x greater relative
+    degradation than noise", computed as delta_MAE_miss / delta_MAE_noise for Hybrid Fusion AA
+    (2.4206 W / 0.0326 W = 74.25).
+  - Methodological Critique: While arithmetically true from the table values, computing
+    ratios with near-zero denominators (0.0326 W noise degradation) creates an unstable,
+    volatile metric that is scientifically sensitive to minute fraction-of-a-Watt rounding.
+  - Corrected Reporting: The ratio headline was removed. Instead, absolute and relative
+    degradation metrics are reported separately and transparently:
+      * Missingness (30% MCAR A-A): Energy-Only +9.13 W (+11.72%), Early Fusion +4.76 W (+6.64%),
+        Late Fusion +4.24 W (+5.37%), Hybrid Fusion +2.42 W (+2.95%).
+      * Noise (20% AWGN A-A): Energy-Only +0.44 W (+0.56%), Early Fusion +0.09 W (+0.13%),
+        Late Fusion +0.10 W (+0.13%), Hybrid Fusion +0.03 W (+0.04%).
+      * Cross-Degradation Paired Difference (Family 6): Missingness exceeded noise degradation
+        by +8.69 W for Energy-Only (p_holm = 1.17e-61), +4.66 W for Early Fusion (p_holm = 1.76e-37),
+        +4.14 W for Late Fusion (p_holm = 8.56e-26), and +2.39 W for Hybrid Fusion (p_holm = 2.31e-27).
+  - Resolution Status: RESOLVED in step10_final_research_synthesis_report_revised.txt.
+
+ITEM 5: Preservation of Original Step 10 Artifacts
+  - Context: The user's strict rules require that original Step 10 artifacts not be overwritten.
+  - Resolution Status: VERIFIED. All original Step 10 files remain intact and untouched:
+      * outputs/tables/step10_clean_benchmark_comparison.csv (ORIGINAL PRESERVED)
+      * outputs/tables/step10_master_performance_table.csv (ORIGINAL PRESERVED)
+      * outputs/tables/step10_statistical_significance_summary.csv (ORIGINAL PRESERVED)
+      * outputs/tables/step10_xai_modality_attribution_summary.csv (ORIGINAL PRESERVED)
+      * outputs/tables/step10_conformal_uncertainty_summary.csv (ORIGINAL PRESERVED)
+      * outputs/reports/step10_final_research_synthesis_report.txt (ORIGINAL PRESERVED)
+    All corrected artifacts are saved under new, dedicated filenames:
+      * outputs/tables/step10_clean_benchmark_comparison_revised.csv
+      * outputs/tables/step10_master_performance_table_revised.csv
+      * outputs/tables/step10_statistical_significance_summary_revised.csv
+      * outputs/tables/step10_xai_modality_attribution_summary_revised.csv
+      * outputs/tables/step10_conformal_uncertainty_summary_revised.csv
+      * outputs/reports/step10_final_research_synthesis_report_revised.txt
+      * outputs/reports/step10_discrepancy_and_verification_report.txt
+
+--------------------------------------------------------------------------------
+3. AUDIT CONCLUSION
+--------------------------------------------------------------------------------
+All five review items have been systematically verified and resolved. Numerical
+consistency across Steps 4 through 9 is 100% verified against underlying audited
+data files. Scientific wording is cautious, rigorous, and strictly grounded in
+measured evidence.
+================================================================================

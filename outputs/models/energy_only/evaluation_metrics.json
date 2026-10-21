@@ -1,0 +1,40 @@
+{
+  "model": "EnergyOnlyLSTM",
+  "step": "4.1",
+  "validation": {
+    "partition": "validation",
+    "samples": 881,
+    "prediction_shape": [
+      881,
+      24
+    ],
+    "metrics": {
+      "mae_watts": 77.253,
+      "rmse_watts": 101.2238,
+      "r2": 0.360517,
+      "mape_pct": 37.9672,
+      "smape_pct": 30.4441,
+      "mape_clamp_threshold_watts": 10.0
+    }
+  },
+  "test": {
+    "partition": "test",
+    "samples": 587,
+    "prediction_shape": [
+      587,
+      24
+    ],
+    "metrics": {
+      "mae_watts": 77.8823,
+      "rmse_watts": 93.3621,
+      "r2": 0.129621,
+      "mape_pct": 56.0091,
+      "smape_pct": 39.3932,
+      "mape_clamp_threshold_watts": 10.0
+    }
+  },
+  "mape_low_value_rule": {
+    "description": "Actual values below threshold are clamped before MAPE division",
+    "threshold_watts": 10.0
+  }
+}
