@@ -161,10 +161,12 @@ Hybrid Fusion (Noise AA vs Clean N-N)    -0.0524     73937.0  9.6021e-01  1.0000
 6. SECONDARY DESCRIPTIVE ANALYSES
 ================================================================================
 A. NON-NEGATIVE PHYSICAL CLIPPING [max(0, L_i,h), U_i,h]:
-   - Because actual household active power is strictly non-negative (y >= 0), clipping the lower
-     bound at zero does not alter empirical coverage (PICP remains identical).
-   - However, clipping reduces average interval width from 268.26 W to 267.42 W for Early Fusion,
-     and lowers the unpenalized width term in the Winkler Interval Score.
+   - Under the project's non-negative active power target assumption (y >= 0), clipping the lower
+     bound to zero [max(0, L_i,h), U_i,h] mathematically preserves empirical coverage because for any
+     y >= 0, the event {y >= max(0, L)} is logically equivalent to {y >= L} when the upper bound
+     U_i,h remains unchanged (PICP remains identical).
+   - In live inference and reporting, clipping reduces effective interval width (e.g., from 268.26 W
+     to 267.42 W for Early Fusion) and provides physically plausible non-negative load bounds.
 
 B. ORACLE TEST-SET REQUIRED INTERVAL WIDTH (DESCRIPTIVE ONLY):
    - To achieve >= 90.0% empirical coverage under test missingness A-A, the required oracle MPIW would be:
@@ -178,15 +180,22 @@ B. ORACLE TEST-SET REQUIRED INTERVAL WIDTH (DESCRIPTIVE ONLY):
 ================================================================================
 7. METHODOLOGICAL LIMITATIONS
 ================================================================================
-1. Serial Dependence: Because the 587 test windows overlap in a rolling horizon protocol,
-   consecutive forecast errors exhibit temporal autocorrelation. While paired Wilcoxon tests
-   compare identical windows simultaneously, the sample points are not strictly independent.
-2. Marginal vs Conditional Coverage: Split conformal prediction guarantees marginal coverage
-   over the calibration distribution. It does not provide formal conditional coverage for
-   individual hours or specific meteorological states.
-3. Distribution Shift Under Test Degradation: Calibrating on nominal data provides a realistic
-   evaluation of deployed performance, but conformal coverage guarantees formally apply only
-   when test and calibration distributions are exchangeable.
+1. Rolling-Window Dependence & Boundary Overlap:
+   - Sequences advance by a one-hour stride, causing adjacent 192-hour windows (168h history + 24h horizon)
+     to share 167 history hours and 23 target hours.
+   - At the partition boundary, the Step 3.7 split report explicitly records:
+     "Test history overlaps Cal target: True" (Test min history 2023-12-01 15:00 vs Cal max target 2023-12-09 13:00).
+   - Chronological forecast-origin separation does not establish exchangeability of dependent rolling windows.
+     Consequently, standard split-conformal i.i.d./exchangeability assumptions are violated, and no formal
+     time-series conformal coverage guarantee is established.
+2. Nominal vs Empirical Coverage:
+   - The 90.0% figure represents nominal calibration coverage.
+   - Observed coverage under temporal autocorrelation, rolling dependence, or data degradation is strictly
+     empirical and is not guaranteed to equal 90.0% out-of-distribution (e.g., observed coverage drops to
+     85.75% under severe dual missingness and 79.92% for Energy-Only).
+3. Marginal vs Conditional Coverage:
+   - Split conformal prediction targets marginal coverage across the benchmark population; it does not
+     guarantee 90% conditional coverage for individual hours, load regimes, or specific meteorological states.
 
 ================================================================================
 8. INVENTORY OF GENERATED ARTIFACTS

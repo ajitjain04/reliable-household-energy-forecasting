@@ -465,30 +465,42 @@ def load_model(model_name: str):
 # ============================================================================
 
 @torch.no_grad()
-def run_inference(model, model_name, X_energy, X_weather):
+def run_inference(model, model_name, X_energy, X_weather, batch_size=64):
     """
-    Run deterministic inference for a given model on given inputs.
+    Run deterministic inference for a given model on given inputs in consistent
+    batches of batch_size (default 64, matching clean test evaluation).
 
     Returns scaled predictions as numpy array of shape (N, 24).
     """
-    # Convert to tensors
-    energy_t = torch.from_numpy(X_energy).float()
-    weather_t = torch.from_numpy(X_weather).float()
+    if batch_size <= 0:
+        raise ValueError(f"batch_size must be positive, got {batch_size}")
+    n_samples = len(X_energy)
+    if n_samples == 0:
+        return np.empty((0, 24), dtype=np.float32)
 
-    if model_name == "energy_only":
-        # Energy-only: only uses X_energy
-        preds = model(energy_t)
-    elif model_name == "early_fusion":
-        # Early fusion: concatenate energy + weather at input level
-        fused = torch.cat([energy_t, weather_t], dim=2)  # (N, 168, 8)
-        preds = model(fused)
-    elif model_name in ("late_fusion", "hybrid_fusion"):
-        # Late/Hybrid fusion: separate energy and weather inputs
-        preds = model(energy_t, weather_t)
-    else:
-        raise ValueError(f"Unknown model: {model_name}")
+    preds_list = []
 
-    return preds.numpy()
+    for start_idx in range(0, n_samples, batch_size):
+        end_idx = min(start_idx + batch_size, n_samples)
+        batch_energy = torch.from_numpy(X_energy[start_idx:end_idx]).float()
+        batch_weather = torch.from_numpy(X_weather[start_idx:end_idx]).float()
+
+        if model_name == "energy_only":
+            # Energy-only: only uses X_energy
+            batch_preds = model(batch_energy)
+        elif model_name == "early_fusion":
+            # Early fusion: concatenate energy + weather at input level
+            fused = torch.cat([batch_energy, batch_weather], dim=2)  # (B, 168, 8)
+            batch_preds = model(fused)
+        elif model_name in ("late_fusion", "hybrid_fusion"):
+            # Late/Hybrid fusion: separate energy and weather inputs
+            batch_preds = model(batch_energy, batch_weather)
+        else:
+            raise ValueError(f"Unknown model: {model_name}")
+
+        preds_list.append(batch_preds.cpu().numpy())
+
+    return np.concatenate(preds_list, axis=0)
 
 
 # ============================================================================

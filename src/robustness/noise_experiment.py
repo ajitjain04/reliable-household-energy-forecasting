@@ -510,26 +510,39 @@ def load_model(model_name: str):
 # ============================================================================
 
 @torch.no_grad()
-def run_inference(model, model_name, X_energy, X_weather):
+def run_inference(model, model_name, X_energy, X_weather, batch_size=64):
     """
-    Run deterministic inference for a given model on given inputs.
+    Run deterministic inference for a given model on given inputs in consistent
+    batches of batch_size (default 64, matching clean test evaluation).
 
     Returns scaled predictions as numpy array of shape (N, 24).
     """
-    energy_t = torch.from_numpy(X_energy).float()
-    weather_t = torch.from_numpy(X_weather).float()
+    if batch_size <= 0:
+        raise ValueError(f"batch_size must be positive, got {batch_size}")
+    n_samples = len(X_energy)
+    if n_samples == 0:
+        return np.empty((0, 24), dtype=np.float32)
 
-    if model_name == "energy_only":
-        preds = model(energy_t)
-    elif model_name == "early_fusion":
-        fused = torch.cat([energy_t, weather_t], dim=2)
-        preds = model(fused)
-    elif model_name in ("late_fusion", "hybrid_fusion"):
-        preds = model(energy_t, weather_t)
-    else:
-        raise ValueError(f"Unknown model: {model_name}")
+    preds_list = []
 
-    return preds.numpy()
+    for start_idx in range(0, n_samples, batch_size):
+        end_idx = min(start_idx + batch_size, n_samples)
+        batch_energy = torch.from_numpy(X_energy[start_idx:end_idx]).float()
+        batch_weather = torch.from_numpy(X_weather[start_idx:end_idx]).float()
+
+        if model_name == "energy_only":
+            batch_preds = model(batch_energy)
+        elif model_name == "early_fusion":
+            fused = torch.cat([batch_energy, batch_weather], dim=2)
+            batch_preds = model(fused)
+        elif model_name in ("late_fusion", "hybrid_fusion"):
+            batch_preds = model(batch_energy, batch_weather)
+        else:
+            raise ValueError(f"Unknown model: {model_name}")
+
+        preds_list.append(batch_preds.cpu().numpy())
+
+    return np.concatenate(preds_list, axis=0)
 
 
 def evaluate_all(conditions, y_clean, scaler_mean, scaler_std):

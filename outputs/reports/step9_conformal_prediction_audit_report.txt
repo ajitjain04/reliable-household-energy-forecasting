@@ -75,7 +75,21 @@ Noise Condition N-A vs Clean N-N Max Discrepancy: 0.000025 W [PASS]
 Noise Condition A-A vs Noise A-N Max Discrepancy: 0.000000 W [PASS]
 
 --------------------------------------------------------------------------------
-4. AUDIT CONCLUSION
+4. METHODOLOGICAL CAVEATS & LIMITATIONS
+--------------------------------------------------------------------------------
+- Rolling-Window Dependence: Sequences advance by 1 hour; adjacent windows share 167 history hours
+  and 23 target hours.
+- Boundary Overlap: Step 3.7 split report records "Test history overlaps Cal target: True" (Test min history
+  2023-12-01 15:00 vs Cal max target 2023-12-09 13:00).
+- Exchangeability Limitation: Chronological separation of forecast origins does not establish exchangeability
+  of serially dependent rolling windows. No time-series conformal coverage guarantee is established.
+- Coverage Interpretation: 90.0% is nominal calibration coverage; observed test coverage under temporal
+  dependence or modality degradation is strictly empirical (e.g., 79.92% for Energy-Only under A-A missingness).
+- Lower-Bound Clipping: Clipping the lower bound to zero [max(0, L), U] preserves coverage under the project's
+  non-negative power target assumption (y >= 0) when the upper bound U remains unchanged.
+
+--------------------------------------------------------------------------------
+5. AUDIT CONCLUSION
 --------------------------------------------------------------------------------
 All pre-execution and post-execution integrity checks passed with zero discrepancies.
 No models were retrained. No existing Step 3-8 artifacts were modified.

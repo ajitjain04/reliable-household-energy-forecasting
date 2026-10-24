@@ -83,14 +83,14 @@ per_window_rmse = {
 # 1.1 Clean predictions
 for m in MODELS:
     p = os.path.join(PROJECT_DIR, "outputs", "predictions", m, "test_predictions.npz")
-    d = np.load(p)
-    act = d["actual_watts"]
-    pred = d["predictions_watts"] if "predictions_watts" in d else d["predicted_watts"]
-    abs_err = np.abs(act - pred)
-    sq_err = (act - pred) ** 2
-    point_errors["clean"][m] = {"NN": abs_err}
-    per_window_mae["clean"][m] = {"NN": np.mean(abs_err, axis=1)}
-    per_window_rmse["clean"][m] = {"NN": np.sqrt(np.mean(sq_err, axis=1))}
+    with np.load(p) as d:
+        act = d["actual_watts"]
+        pred = d["predictions_watts"] if "predictions_watts" in d else d["predicted_watts"]
+        abs_err = np.abs(act - pred)
+        sq_err = (act - pred) ** 2
+        point_errors["clean"][m] = {"NN": abs_err}
+        per_window_mae["clean"][m] = {"NN": np.mean(abs_err, axis=1)}
+        per_window_rmse["clean"][m] = {"NN": np.sqrt(np.mean(sq_err, axis=1))}
 
 # 1.2 Step 5A (Missingness) predictions
 for m in MODELS:
@@ -99,14 +99,14 @@ for m in MODELS:
     per_window_rmse["missingness"][m] = {}
     for c in CONDS:
         p = os.path.join(PROJECT_DIR, "outputs", "robustness", "missingness_30", "predictions", m, f"{c}_predictions.npz")
-        d = np.load(p)
-        act = d["actual_watts"]
-        pred = d["predictions_watts"]
-        abs_err = np.abs(act - pred)
-        sq_err = (act - pred) ** 2
-        point_errors["missingness"][m][c] = abs_err
-        per_window_mae["missingness"][m][c] = np.mean(abs_err, axis=1)
-        per_window_rmse["missingness"][m][c] = np.sqrt(np.mean(sq_err, axis=1))
+        with np.load(p) as d:
+            act = d["actual_watts"]
+            pred = d["predictions_watts"]
+            abs_err = np.abs(act - pred)
+            sq_err = (act - pred) ** 2
+            point_errors["missingness"][m][c] = abs_err
+            per_window_mae["missingness"][m][c] = np.mean(abs_err, axis=1)
+            per_window_rmse["missingness"][m][c] = np.sqrt(np.mean(sq_err, axis=1))
 
 # 1.3 Step 5B (Noise) predictions
 for m in MODELS:
@@ -115,14 +115,14 @@ for m in MODELS:
     per_window_rmse["noise"][m] = {}
     for c in CONDS:
         p = os.path.join(PROJECT_DIR, "outputs", "robustness", "noise_20", "predictions", m, f"{c}_predictions.npz")
-        d = np.load(p)
-        act = d["actual_watts"]
-        pred = d["predictions_watts"]
-        abs_err = np.abs(act - pred)
-        sq_err = (act - pred) ** 2
-        point_errors["noise"][m][c] = abs_err
-        per_window_mae["noise"][m][c] = np.mean(abs_err, axis=1)
-        per_window_rmse["noise"][m][c] = np.sqrt(np.mean(sq_err, axis=1))
+        with np.load(p) as d:
+            act = d["actual_watts"]
+            pred = d["predictions_watts"]
+            abs_err = np.abs(act - pred)
+            sq_err = (act - pred) ** 2
+            point_errors["noise"][m][c] = abs_err
+            per_window_mae["noise"][m][c] = np.mean(abs_err, axis=1)
+            per_window_rmse["noise"][m][c] = np.sqrt(np.mean(sq_err, axis=1))
 
 print("All predictions successfully loaded and converted to per-window losses.")
 print("Verified sample size per series: N = 587 windows.")
@@ -208,9 +208,9 @@ def run_hln_dm_test(loss1, loss2, h=24, k=24):
     
     d_centered = d - d_mean
     gamma = np.zeros(k + 1)
-    gamma[0] = np.mean(d_centered ** 2)
+    gamma[0] = np.sum(d_centered ** 2) / T
     for tau in range(1, k + 1):
-        gamma[tau] = np.mean(d_centered[tau:] * d_centered[:-tau])
+        gamma[tau] = np.sum(d_centered[tau:] * d_centered[:-tau]) / T
         
     weights = 1.0 - np.arange(1, k + 1) / (k + 1.0)
     lr_var = gamma[0] + 2.0 * np.sum(weights * gamma[1:])
@@ -227,11 +227,20 @@ def compute_bootstrap_cis(d, n_resamples=10000, seed=42):
     """
     Compute 95% bootstrap confidence intervals for mean and median differences.
     Uses BCa bootstrap when available, with percentile fallback.
+    Explicitly tracks method status ('bca', 'percentile', 'degenerate_zero', or 'fallback_degenerate').
+    Validates that inputs are finite and non-empty.
     """
+    d = np.asarray(d, dtype=float)
+    if d.size == 0:
+        raise ValueError("Bootstrap input array is empty.")
+    if not np.all(np.isfinite(d)):
+        raise ValueError("Bootstrap input array contains non-finite values (NaN or Inf).")
+
     if np.all(np.abs(d) < 1e-12):
-        return 0.0, 0.0, 0.0, 0.0
-    
+        return 0.0, 0.0, 0.0, 0.0, "degenerate_zero", "degenerate_zero"
+
     # 1. Mean CI
+    mean_status = "bca"
     try:
         res_mean = stats.bootstrap(
             (d,), np.mean, confidence_level=0.95,
@@ -240,16 +249,28 @@ def compute_bootstrap_cis(d, n_resamples=10000, seed=42):
         )
         mean_low = float(res_mean.confidence_interval.low)
         mean_high = float(res_mean.confidence_interval.high)
+        if np.isnan(mean_low) or np.isnan(mean_high) or np.isinf(mean_low) or np.isinf(mean_high):
+            raise ValueError("BCa returned non-finite values for mean CI")
     except Exception:
-        res_mean = stats.bootstrap(
-            (d,), np.mean, confidence_level=0.95,
-            n_resamples=n_resamples, method="percentile",
-            random_state=seed
-        )
-        mean_low = float(res_mean.confidence_interval.low)
-        mean_high = float(res_mean.confidence_interval.high)
-        
+        try:
+            mean_status = "percentile"
+            res_mean = stats.bootstrap(
+                (d,), np.mean, confidence_level=0.95,
+                n_resamples=n_resamples, method="percentile",
+                random_state=seed
+            )
+            mean_low = float(res_mean.confidence_interval.low)
+            mean_high = float(res_mean.confidence_interval.high)
+            if np.isnan(mean_low) or np.isnan(mean_high) or np.isinf(mean_low) or np.isinf(mean_high):
+                raise ValueError("Percentile returned non-finite values for mean CI")
+        except Exception:
+            mean_status = "fallback_degenerate"
+            mean_pt = float(np.mean(d))
+            mean_low = mean_pt
+            mean_high = mean_pt
+
     # 2. Median CI
+    med_status = "bca"
     try:
         res_med = stats.bootstrap(
             (d,), np.median, confidence_level=0.95,
@@ -258,16 +279,27 @@ def compute_bootstrap_cis(d, n_resamples=10000, seed=42):
         )
         med_low = float(res_med.confidence_interval.low)
         med_high = float(res_med.confidence_interval.high)
+        if np.isnan(med_low) or np.isnan(med_high) or np.isinf(med_low) or np.isinf(med_high):
+            raise ValueError("BCa returned non-finite values for median CI")
     except Exception:
-        res_med = stats.bootstrap(
-            (d,), np.median, confidence_level=0.95,
-            n_resamples=n_resamples, method="percentile",
-            random_state=seed
-        )
-        med_low = float(res_med.confidence_interval.low)
-        med_high = float(res_med.confidence_interval.high)
-        
-    return mean_low, mean_high, med_low, med_high
+        try:
+            med_status = "percentile"
+            res_med = stats.bootstrap(
+                (d,), np.median, confidence_level=0.95,
+                n_resamples=n_resamples, method="percentile",
+                random_state=seed
+            )
+            med_low = float(res_med.confidence_interval.low)
+            med_high = float(res_med.confidence_interval.high)
+            if np.isnan(med_low) or np.isnan(med_high) or np.isinf(med_low) or np.isinf(med_high):
+                raise ValueError("Percentile returned non-finite values for median CI")
+        except Exception:
+            med_status = "fallback_degenerate"
+            med_pt = float(np.median(d))
+            med_low = med_pt
+            med_high = med_pt
+
+    return mean_low, mean_high, med_low, med_high, mean_status, med_status
 
 # ==============================================================================
 # 3. BUILD THE COMPLETE 78-COMPARISON SPECIFICATION
@@ -408,7 +440,7 @@ for idx, item in enumerate(comparisons_plan):
     
     # Bootstrap CIs (seed reproducible per test)
     b_seed = RANDOM_SEED + t_id * 101
-    mean_ci_low, mean_ci_high, med_ci_low, med_ci_high = compute_bootstrap_cis(
+    mean_ci_low, mean_ci_high, med_ci_low, med_ci_high, mean_ci_status, med_ci_status = compute_bootstrap_cis(
         d, n_resamples=10000, seed=b_seed
     )
     
@@ -436,9 +468,11 @@ for idx, item in enumerate(comparisons_plan):
         "mean_diff_watts": round(mean_diff, 4),
         "mean_ci_95_low": round(mean_ci_low, 4),
         "mean_ci_95_high": round(mean_ci_high, 4),
+        "mean_ci_status": mean_ci_status,
         "median_diff_watts": round(median_diff, 4),
         "median_ci_95_low": round(med_ci_low, 4),
         "median_ci_95_high": round(med_ci_high, 4),
+        "median_ci_status": med_ci_status,
         "rel_diff_pct": round(rel_diff_pct, 3),
         "cohens_dz": round(cohens_dz, 4),
         "rank_biserial_r_rb": round(r_rb, 4),
@@ -623,16 +657,64 @@ for fam_id, fam_title in [
 R()
 
 R_hr(); R("3. KEY STATISTICALLY SUPPORTED FINDINGS"); R_hr()
-R("""
+
+def find_test(family_id, comp_prefix):
+    for r in test_results:
+        if r["family_id"] == family_id and r["comparison_name"].startswith(comp_prefix):
+            return r
+    raise KeyError(f"Test not found: family {family_id}, comparison prefix '{comp_prefix}'")
+
+def fmt_res_line(r):
+    ci_note = ""
+    if r.get("mean_ci_status") == "fallback_degenerate":
+        ci_note = " [degenerate/unavailable fallback]"
+    ci_str = f"[{r['mean_ci_95_low']:+.2f}, {r['mean_ci_95_high']:+.2f}]{ci_note}"
+    return (
+        f"Mean Diff = {r['mean_diff_watts']:+.2f} W {ci_str}, r_rb = {r['rank_biserial_r_rb']:+.3f}, "
+        f"Wilcoxon p_raw = {format_p(r['wilcoxon_p_raw'])}, p_holm = {format_p(r['wilcoxon_p_holm'])}, "
+        f"p_fdr = {format_p(r['wilcoxon_p_fdr'])} (HLN-DM p = {format_p(r['hln_p_raw'])}) -> {r['decision']}"
+    )
+
+# Finding 1
+r1_eo = find_test(1, "Early Fusion vs Energy-Only")
+r1_lf = find_test(1, "Early Fusion vs Late Fusion")
+r1_hf = find_test(1, "Early Fusion vs Hybrid Fusion")
+
+# Finding 2
+r2_eo = find_test(2, "Early Fusion vs Energy-Only (Miss AA)")
+r2_lf = find_test(2, "Early Fusion vs Late Fusion (Miss AA)")
+r2_hf = find_test(2, "Early Fusion vs Hybrid Fusion (Miss AA)")
+
+# Finding 3
+r4_eo_na = find_test(4, "Energy-Only (Miss NA vs Clean NN)")
+r4_ef_na = find_test(4, "Early Fusion (Miss NA vs Clean NN)")
+r4_lf_na = find_test(4, "Late Fusion (Miss NA vs Clean NN)")
+r4_hf_na = find_test(4, "Hybrid Fusion (Miss NA vs Clean NN)")
+
+r4_eo_an = find_test(4, "Energy-Only (Miss AN vs Clean NN)")
+r4_ef_an = find_test(4, "Early Fusion (Miss AN vs Clean NN)")
+r4_lf_an = find_test(4, "Late Fusion (Miss AN vs Clean NN)")
+r4_hf_an = find_test(4, "Hybrid Fusion (Miss AN vs Clean NN)")
+
+# Finding 4
+r6_eo = find_test(6, "Energy-Only (Miss AA vs Noise AA Degradation)")
+r6_ef = find_test(6, "Early Fusion (Miss AA vs Noise AA Degradation)")
+r6_lf = find_test(6, "Late Fusion (Miss AA vs Noise AA Degradation)")
+r6_hf = find_test(6, "Hybrid Fusion (Miss AA vs Noise AA Degradation)")
+
+# Finding 5
+fam5_rows = [r for r in test_results if r["family_id"] == 5]
+max_fam5_mean = max(abs(r["mean_diff_watts"]) for r in fam5_rows)
+max_fam5_rel = max(abs(r["rel_diff_pct"]) for r in fam5_rows)
+max_fam5_dz = max(abs(r["cohens_dz"]) for r in fam5_rows)
+fam5_sig_holm = sum(1 for r in fam5_rows if r["sig_holm"])
+
+R(f"""
 1. Early Fusion Superiority on Clean Data:
-   Under clean conditions (N-N), Early Fusion significantly outperforms all other
-   models:
-   - Early Fusion vs Energy-Only: Mean Diff = -6.25 W [-7.47, -5.04], r_rb = -0.560,
-     Wilcoxon p_holm = 8.52e-28 (HLN-DM p = 2.45e-04).
-   - Early Fusion vs Late Fusion: Mean Diff = -7.27 W [-8.35, -6.19], r_rb = -0.638,
-     Wilcoxon p_holm = 1.34e-37 (HLN-DM p = 2.76e-07).
-   - Early Fusion vs Hybrid Fusion: Mean Diff = -10.55 W [-11.83, -9.28], r_rb = -0.732,
-     Wilcoxon p_holm = 3.86e-51 (HLN-DM p = 2.70e-10).
+   Under clean conditions (N-N), Early Fusion significantly outperforms all other models:
+   - Early Fusion vs Energy-Only:  {fmt_res_line(r1_eo)}
+   - Early Fusion vs Late Fusion:   {fmt_res_line(r1_lf)}
+   - Early Fusion vs Hybrid Fusion: {fmt_res_line(r1_hf)}
    Finding: The clean-data accuracy advantage of Early Fusion is statistically
    distinguishable and confirmed by both non-parametric and time-series tests.
 
@@ -640,40 +722,41 @@ R("""
    Even under the most severe degradation conditions (A-A joint missingness),
    Early Fusion maintains a statistically significant performance lead over all
    three alternative architectures:
-   - vs Energy-Only: Mean Diff = -10.62 W [-12.01, -9.26], p_holm = 2.26e-41.
-   - vs Late Fusion: Mean Diff = -6.75 W [-7.78, -5.73], p_holm = 1.25e-33.
-   - vs Hybrid Fusion: Mean Diff = -8.21 W [-9.50, -6.95], p_holm = 5.25e-30.
+   - vs Energy-Only:  {fmt_res_line(r2_eo)}
+   - vs Late Fusion:   {fmt_res_line(r2_lf)}
+   - vs Hybrid Fusion: {fmt_res_line(r2_hf)}
 
 3. Modality Sensitivity Asymmetry Under Missingness:
    Within-model degradation comparisons confirm statistically that electricity
    missingness causes significantly greater degradation than weather missingness:
-   - For all four architectures, electricity missingness (A-N vs N-N) is highly
-     statistically significant (p_holm < 1e-15).
-   - Weather missingness (N-A vs N-N) produces small error increments that are
-     marginally significant or non-significant after family correction:
-     * Energy-Only: Exactly 0.0 W (Control identity verified, p_holm = 1.0).
-     * Early Fusion: Mean Diff = +0.17 W [-0.14, +0.48], p_raw = 0.2802, p_holm = 0.5604 (Not Significant).
-     * Late Fusion: Mean Diff = +0.65 W [+0.53, +0.77], p_holm < 1e-15 (Significant).
-     * Hybrid Fusion: Mean Diff = +0.36 W [+0.29, +0.44], p_holm < 1e-15 (Significant).
-   Weather degradation produces very small error changes that are either
-   statistically indistinguishable from zero (Early Fusion, p_holm = 0.5604) or
-   have small effect sizes (<= +0.65 W), whereas electricity degradation produces
-   large, highly significant error surges (+1.89 W to +9.13 W, p_holm < 1e-15).
+   - Electricity missingness (A-N vs Clean NN):
+     * Energy-Only:   {fmt_res_line(r4_eo_an)}
+     * Early Fusion:  {fmt_res_line(r4_ef_an)}
+     * Late Fusion:   {fmt_res_line(r4_lf_an)}
+     * Hybrid Fusion: {fmt_res_line(r4_hf_an)}
+   - Weather missingness (N-A vs Clean NN):
+     * Energy-Only:   {fmt_res_line(r4_eo_na)}
+     * Early Fusion:  {fmt_res_line(r4_ef_na)}
+     * Late Fusion:   {fmt_res_line(r4_lf_na)}
+     * Hybrid Fusion: {fmt_res_line(r4_hf_na)}
+   Synthesis: Weather degradation produces very small error changes that are either
+   statistically indistinguishable from zero (Energy-Only exact control identity p_holm = 1.0;
+   Early Fusion p_holm = {format_p(r4_ef_na['wilcoxon_p_holm'])}) or of minor magnitude (<= +{max(r4_lf_na['mean_diff_watts'], r4_hf_na['mean_diff_watts']):.2f} W),
+   whereas electricity degradation causes severe surges (+{min(r['mean_diff_watts'] for r in [r4_eo_an, r4_ef_an, r4_lf_an, r4_hf_an]):.2f} W to +{max(r['mean_diff_watts'] for r in [r4_eo_an, r4_ef_an, r4_lf_an, r4_hf_an]):.2f} W, p_holm < 1e-15).
 
 4. Missingness vs Noise Disruption Asymmetry:
    Cross-degradation paired testing (Family 6) confirms that 30% MCAR missingness
-   causes statistically greater error increases than 20% Gaussian noise for all
-   models under electricity (A-N) and joint (A-A) degradation:
-   - Energy-Only AA: Miss degradation exceeds Noise by +8.69 W (p_holm = 2.38e-67).
-   - Early Fusion AA: Miss degradation exceeds Noise by +4.66 W (p_holm = 4.23e-43).
-   - Late Fusion AA: Miss degradation exceeds Noise by +4.14 W (p_holm = 2.89e-40).
-   - Hybrid Fusion AA: Miss degradation exceeds Noise by +2.39 W (p_holm = 1.48e-28).
+   causes statistically greater error increases than 20% Gaussian noise under joint (A-A) degradation:
+   - Energy-Only AA:  {fmt_res_line(r6_eo)}
+   - Early Fusion AA: {fmt_res_line(r6_ef)}
+   - Late Fusion AA:  {fmt_res_line(r6_lf)}
+   - Hybrid Fusion AA:{fmt_res_line(r6_hf)}
 
-5. Noise Sensitivity is Negligible Across All Architectures:
+5. Noise Sensitivity Across Architectures:
    Under 20% additive Gaussian noise (Family 5), error increases are minute
-   (Mean Diff <= +0.44 W, relative delta < 0.6%). While detectable in some
-   paired rank tests due to N=587, effect sizes (dz < 0.15) indicate negligible
-   practical engineering impact.
+   (Max Mean Diff = +{max_fam5_mean:.2f} W, Max relative delta = {max_fam5_rel:.2f}%, Max Cohen's dz = {max_fam5_dz:.4f}).
+   Only {fam5_sig_holm} / {len(fam5_rows)} tests reach significance after Holm-Bonferroni correction,
+   confirming that low-magnitude Gaussian noise produces minimal practical engineering degradation.
 """)
 
 R_hr(); R("4. SENSITIVITY AND COMPLEMENTARY TEST AGREEMENT"); R_hr()
@@ -736,6 +819,65 @@ print(f"Report written: {report_file}")
 # ==============================================================================
 # 9. GENERATE AUDIT / VALIDATION REPORT
 # ==============================================================================
+# Programmatic validation checks
+chk1_pass = (n_total == 78)
+chk2_pass = all(r["n_windows"] == 587 for r in test_results)
+
+# Count NaNs or Infs across all numeric fields
+nan_inf_count = 0
+for r in test_results:
+    for k, v in r.items():
+        if isinstance(v, (int, float)) and (np.isnan(v) or np.isinf(v)):
+            nan_inf_count += 1
+chk3_pass = (nan_inf_count == 0)
+
+# Check multiple-testing corrections valid range
+chk4_pass = all(
+    0.0 <= r["wilcoxon_p_holm"] <= 1.0 and 0.0 <= r["wilcoxon_p_fdr"] <= 1.0
+    for r in test_results
+)
+
+# Check bootstrap CIs ordering and finiteness
+chk5_pass = all(
+    r["mean_ci_95_low"] <= r["mean_ci_95_high"] and
+    r["median_ci_95_low"] <= r["median_ci_95_high"] and
+    not any(np.isnan([r["mean_ci_95_low"], r["mean_ci_95_high"], r["median_ci_95_low"], r["median_ci_95_high"]]))
+    for r in test_results
+)
+
+# Test execution counts
+n_wilcoxon_valid = len([r for r in test_results if not np.isnan(r["wilcoxon_p_raw"])])
+chk6_pass = (n_wilcoxon_valid == 78)
+
+n_perm_valid = len([r for r in test_results if not np.isnan(r["perm_p_raw"])])
+chk7_pass = (n_perm_valid == 78)
+
+n_hln_valid = len([r for r in test_results if not np.isnan(r["hln_p_raw"])])
+chk8_pass = (n_hln_valid == 78)
+
+# Check Step 4 clean predictions files exist and are non-empty
+clean_paths = [os.path.join(PROJECT_DIR, "outputs", "predictions", m, "test_predictions.npz") for m in MODELS]
+chk9_pass = all(os.path.isfile(p) and os.path.getsize(p) > 0 for p in clean_paths)
+
+# Energy-Only control invariance check
+r_eo_na_miss = find_test(4, "Energy-Only (Miss NA vs Clean NN)")
+r_eo_na_noise = find_test(5, "Energy-Only (Noise NA vs Clean NN)")
+chk10_pass = (
+    abs(r_eo_na_miss["mean_diff_watts"]) < 1e-6 and
+    abs(r_eo_na_miss["rank_biserial_r_rb"]) < 1e-6 and
+    r_eo_na_miss["wilcoxon_p_raw"] == 1.0 and
+    r_eo_na_miss["wilcoxon_p_holm"] == 1.0 and
+    abs(r_eo_na_noise["mean_diff_watts"]) < 1e-6 and
+    abs(r_eo_na_noise["rank_biserial_r_rb"]) < 1e-6 and
+    r_eo_na_noise["wilcoxon_p_raw"] == 1.0 and
+    r_eo_na_noise["wilcoxon_p_holm"] == 1.0
+)
+
+all_checks_passed = all([
+    chk1_pass, chk2_pass, chk3_pass, chk4_pass, chk5_pass,
+    chk6_pass, chk7_pass, chk8_pass, chk9_pass, chk10_pass
+])
+
 audit_lines = []
 def A(t=""): audit_lines.append(t)
 A("=" * 80)
@@ -745,24 +887,27 @@ A(f"Audit Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 A(f"Execution Engine: src/analysis/run_statistical_tests.py")
 A()
 A("VALIDATION CHECKLIST:")
-A(f"  1. All 78 planned comparisons executed:          PASS ({n_total} / 78)")
-A(f"  2. Paired sample size identical across all tests: PASS (N = 587)")
-A(f"  3. No NaN / Inf values in statistical outputs:    PASS (0 NaN/Inf detected)")
-A(f"  4. Multiple-testing corrections applied:         PASS (Holm-Bonferroni & BH-FDR)")
-A(f"  5. Bootstrap confidence intervals generated:     PASS (BCa/percentile B=10,000)")
-A(f"  6. Wilcoxon signed-rank tests executed:          PASS (78 / 78)")
-A(f"  7. Permutation tests executed:                   PASS (78 / 78)")
-A(f"  8. HLN Diebold-Mariano tests executed:           PASS (78 / 78)")
-A(f"  9. Existing Steps 4-6 artifacts unchanged:       PASS (Verified)")
+A(f"  1. All 78 planned comparisons executed:          {'PASS' if chk1_pass else 'FAIL'} ({n_total} / 78)")
+A(f"  2. Paired sample size identical across all tests: {'PASS' if chk2_pass else 'FAIL'} (N = 587)")
+A(f"  3. No NaN / Inf values in statistical outputs:    {'PASS' if chk3_pass else 'FAIL'} ({nan_inf_count} NaN/Inf detected)")
+A(f"  4. Multiple-testing corrections applied:         {'PASS' if chk4_pass else 'FAIL'} (Holm-Bonferroni & BH-FDR valid)")
+A(f"  5. Bootstrap confidence intervals generated:     {'PASS' if chk5_pass else 'FAIL'} (BCa/percentile B=10,000, all finite; fallbacks tracked)")
+A(f"  6. Wilcoxon signed-rank tests executed:          {'PASS' if chk6_pass else 'FAIL'} ({n_wilcoxon_valid} / 78)")
+A(f"  7. Permutation tests executed:                   {'PASS' if chk7_pass else 'FAIL'} ({n_perm_valid} / 78)")
+A(f"  8. HLN Diebold-Mariano tests executed:           {'PASS' if chk8_pass else 'FAIL'} ({n_hln_valid} / 78)")
+A(f"  9. Step 4 clean prediction files present:        {'PASS' if chk9_pass else 'FAIL'} (Prediction files exist and are non-empty; does not prove content unchanged)")
+A(f" 10. Energy-Only control invariance (NN vs NA):     {'PASS' if chk10_pass else 'FAIL'} (Miss diff={r_eo_na_miss['mean_diff_watts']:.4f} W, p_raw={r_eo_na_miss['wilcoxon_p_raw']}; Noise diff={r_eo_na_noise['mean_diff_watts']:.4f} W, p_raw={r_eo_na_noise['wilcoxon_p_raw']})")
+A()
+A(f"OVERALL AUDIT VERDICT: {'PASS -- ALL CHECKS VERIFIED' if all_checks_passed else 'FAIL -- AUDIT CHECKS FAILED'}")
 A()
 A("STATISTICAL AUDIT DETAILS:")
 A(f"  - Number of hypothesis families: 6")
-A(f"  - Family 1 (Clean Models):                   6 tests, {sum(1 for r in test_results if r['family_id']==1 and r['sig_holm'])} significant")
-A(f"  - Family 2 (Miss Between-Model):            18 tests, {sum(1 for r in test_results if r['family_id']==2 and r['sig_holm'])} significant")
-A(f"  - Family 3 (Noise Between-Model):           18 tests, {sum(1 for r in test_results if r['family_id']==3 and r['sig_holm'])} significant")
-A(f"  - Family 4 (Within-Model Miss):             12 tests, {sum(1 for r in test_results if r['family_id']==4 and r['sig_holm'])} significant")
-A(f"  - Family 5 (Within-Model Noise):            12 tests, {sum(1 for r in test_results if r['family_id']==5 and r['sig_holm'])} significant")
-A(f"  - Family 6 (Cross-Degradation):             12 tests, {sum(1 for r in test_results if r['family_id']==6 and r['sig_holm'])} significant")
+A(f"  - Family 1 (Clean Models):                   6 tests, {sum(1 for r in test_results if r['family_id']==1 and r['sig_holm'])} significant (Holm)")
+A(f"  - Family 2 (Miss Between-Model):            18 tests, {sum(1 for r in test_results if r['family_id']==2 and r['sig_holm'])} significant (Holm)")
+A(f"  - Family 3 (Noise Between-Model):           18 tests, {sum(1 for r in test_results if r['family_id']==3 and r['sig_holm'])} significant (Holm)")
+A(f"  - Family 4 (Within-Model Miss):             12 tests, {sum(1 for r in test_results if r['family_id']==4 and r['sig_holm'])} significant (Holm)")
+A(f"  - Family 5 (Within-Model Noise):            12 tests, {sum(1 for r in test_results if r['family_id']==5 and r['sig_holm'])} significant (Holm)")
+A(f"  - Family 6 (Cross-Degradation):             12 tests, {sum(1 for r in test_results if r['family_id']==6 and r['sig_holm'])} significant (Holm)")
 A()
 A("DECISION TOTALS:")
 A(f"  - Raw significant (p < 0.05):               {n_sig_raw} / {n_total}")
@@ -772,6 +917,9 @@ A()
 A("WARNINGS / CAVEATS:")
 A("  - Energy-Only NA vs NN within-model test has exact zero difference (Control sanity PASS).")
 A("  - Overlapping sliding windows (1h stride) create autocorrelation; HLN HAC lag 24 explicitly models this.")
+n_fallback_cis = sum(1 for r in test_results if r.get("mean_ci_status") == "fallback_degenerate" or r.get("median_ci_status") == "fallback_degenerate")
+if n_fallback_cis > 0:
+    A(f"  - Bootstrap CI fallback: {n_fallback_cis} comparison(s) used point-estimate fallback marked as degenerate/unavailable.")
 A("=" * 80)
 
 audit_file = os.path.join(REPORTS_DIR, "step7_statistical_audit_report.txt")

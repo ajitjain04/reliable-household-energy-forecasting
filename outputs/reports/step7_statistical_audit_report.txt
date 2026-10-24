@@ -1,28 +1,31 @@
 ================================================================================
 STEP 7 -- STATISTICAL AUDIT & VALIDATION REPORT
 ================================================================================
-Audit Date: 2026-10-06 14:29:57
+Audit Date: 2026-10-25 00:17:52
 Execution Engine: src/analysis/run_statistical_tests.py
 
 VALIDATION CHECKLIST:
   1. All 78 planned comparisons executed:          PASS (78 / 78)
   2. Paired sample size identical across all tests: PASS (N = 587)
   3. No NaN / Inf values in statistical outputs:    PASS (0 NaN/Inf detected)
-  4. Multiple-testing corrections applied:         PASS (Holm-Bonferroni & BH-FDR)
-  5. Bootstrap confidence intervals generated:     PASS (BCa/percentile B=10,000)
+  4. Multiple-testing corrections applied:         PASS (Holm-Bonferroni & BH-FDR valid)
+  5. Bootstrap confidence intervals generated:     PASS (BCa/percentile B=10,000, all finite; fallbacks tracked)
   6. Wilcoxon signed-rank tests executed:          PASS (78 / 78)
   7. Permutation tests executed:                   PASS (78 / 78)
   8. HLN Diebold-Mariano tests executed:           PASS (78 / 78)
-  9. Existing Steps 4-6 artifacts unchanged:       PASS (Verified)
+  9. Step 4 clean prediction files present:        PASS (Prediction files exist and are non-empty; does not prove content unchanged)
+ 10. Energy-Only control invariance (NN vs NA):     PASS (Miss diff=0.0000 W, p_raw=1.0; Noise diff=0.0000 W, p_raw=1.0)
+
+OVERALL AUDIT VERDICT: PASS -- ALL CHECKS VERIFIED
 
 STATISTICAL AUDIT DETAILS:
   - Number of hypothesis families: 6
-  - Family 1 (Clean Models):                   6 tests, 5 significant
-  - Family 2 (Miss Between-Model):            18 tests, 18 significant
-  - Family 3 (Noise Between-Model):           18 tests, 15 significant
-  - Family 4 (Within-Model Miss):             12 tests, 10 significant
-  - Family 5 (Within-Model Noise):            12 tests, 2 significant
-  - Family 6 (Cross-Degradation):             12 tests, 10 significant
+  - Family 1 (Clean Models):                   6 tests, 5 significant (Holm)
+  - Family 2 (Miss Between-Model):            18 tests, 18 significant (Holm)
+  - Family 3 (Noise Between-Model):           18 tests, 15 significant (Holm)
+  - Family 4 (Within-Model Miss):             12 tests, 10 significant (Holm)
+  - Family 5 (Within-Model Noise):            12 tests, 2 significant (Holm)
+  - Family 6 (Cross-Degradation):             12 tests, 10 significant (Holm)
 
 DECISION TOTALS:
   - Raw significant (p < 0.05):               60 / 78

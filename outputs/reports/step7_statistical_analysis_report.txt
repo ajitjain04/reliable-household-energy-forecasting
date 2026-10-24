@@ -2,7 +2,7 @@
 STEP 7 -- FORMAL STATISTICAL ANALYSIS REPORT
 Reliable Multimodal Household Energy Forecasting Under Degraded Weather Information
 ================================================================================
-Generated: 2026-10-06 14:29:57
+Generated: 2026-10-25 00:17:52
 Status: COMPLETE -- Full 78-Test Battery Executed
 
 --------------------------------------------------------------------------------
@@ -25,17 +25,17 @@ Status: COMPLETE -- Full 78-Test Battery Executed
 --------------------------------------------------------------------------------
 
 --- Family 1: Clean Model Comparisons (N-N) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
 Early Fusion vs Energy-Only (Clean NN)        -6.25       [-7.05, -5.49]   -0.639    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Late Fusion vs Energy-Only (Clean NN)         +1.02       [+0.02, +2.00]   +0.074     0.1197     0.1197 Not Significant 
+Late Fusion vs Energy-Only (Clean NN)         +1.02       [+0.02, +2.00]   +0.074     0.1197     0.1197 Not Significant
 Hybrid Fusion vs Energy-Only (Clean NN)       +4.30       [+3.46, +5.12]   +0.498    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Late Fusion (Clean NN)        -7.27       [-8.04, -6.41]   -0.719    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Hybrid Fusion (Clean NN)     -10.55      [-11.45, -9.60]   -0.811    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion vs Hybrid Fusion (Clean NN)       -3.28       [-3.85, -2.76]   -0.407    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 
 --- Family 2: Model Comparisons Under Missingness (30% MCAR) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
 Early Fusion vs Energy-Only (Miss NA)         -6.07       [-6.94, -5.18]   -0.567    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion vs Energy-Only (Miss NA)          +1.67       [+0.74, +2.58]   +0.143     0.0027     0.0027 Significant (p_holm < 0.05)
@@ -57,34 +57,34 @@ Early Fusion vs Hybrid Fusion (Miss AA)       -8.21       [-9.24, -7.17]   -0.67
 Late Fusion vs Hybrid Fusion (Miss AA)        -1.47       [-1.85, -1.11]   -0.263   3.30e-08   1.32e-07 Significant (p_holm < 0.05)
 
 --- Family 3: Model Comparisons Under Noise (20% AWGN) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
 Early Fusion vs Energy-Only (Noise NA)        -6.18       [-7.00, -5.43]   -0.633    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Late Fusion vs Energy-Only (Noise NA)         +1.04       [+0.05, +2.03]   +0.075     0.1163     0.3489 Not Significant 
+Late Fusion vs Energy-Only (Noise NA)         +1.04       [+0.05, +2.03]   +0.075     0.1163     0.3489 Not Significant
 Hybrid Fusion vs Energy-Only (Noise NA)       +4.31       [+3.49, +5.15]   +0.497    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Late Fusion (Noise NA)        -7.22       [-8.04, -6.39]   -0.711    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Hybrid Fusion (Noise NA)     -10.49      [-11.39, -9.54]   -0.806    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion vs Hybrid Fusion (Noise NA)       -3.27       [-3.82, -2.74]   -0.406    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Energy-Only (Noise AN)        -6.67       [-7.51, -5.88]   -0.658    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Late Fusion vs Energy-Only (Noise AN)         +0.67       [-0.33, +1.69]   +0.044     0.3529     0.6769 Not Significant 
+Late Fusion vs Energy-Only (Noise AN)         +0.67       [-0.33, +1.69]   +0.044     0.3529     0.6769 Not Significant
 Hybrid Fusion vs Energy-Only (Noise AN)       +3.90       [+3.06, +4.73]   +0.452    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Late Fusion (Noise AN)        -7.34       [-8.13, -6.53]   -0.732    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Hybrid Fusion (Noise AN)     -10.57      [-11.46, -9.64]   -0.813    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion vs Hybrid Fusion (Noise AN)       -3.23       [-3.78, -2.71]   -0.388   4.19e-16   2.09e-15 Significant (p_holm < 0.05)
 Early Fusion vs Energy-Only (Noise AA)        -6.59       [-7.42, -5.77]   -0.651    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Late Fusion vs Energy-Only (Noise AA)         +0.69       [-0.34, +1.69]   +0.046     0.3384     0.6769 Not Significant 
+Late Fusion vs Energy-Only (Noise AA)         +0.69       [-0.34, +1.69]   +0.046     0.3384     0.6769 Not Significant
 Hybrid Fusion vs Energy-Only (Noise AA)       +3.90       [+3.03, +4.73]   +0.452    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Late Fusion (Noise AA)        -7.28       [-8.09, -6.46]   -0.721    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion vs Hybrid Fusion (Noise AA)     -10.49      [-11.41, -9.53]   -0.806    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion vs Hybrid Fusion (Noise AA)       -3.21       [-3.77, -2.69]   -0.386   5.70e-16   2.28e-15 Significant (p_holm < 0.05)
 
 --- Family 4: Within-Model Degradation Impact (Missingness) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
-Energy-Only (Miss NA vs Clean NN)             -0.00       [-0.00, +0.00]   -0.400     0.4497     0.5604 Not Significant 
+Energy-Only (Miss NA vs Clean NN)             +0.00       [+0.00, +0.00]   +0.000     1.0000     1.0000 Not Significant
 Energy-Only (Miss AN vs Clean NN)             +9.13      [+8.29, +10.00]   +0.827    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Energy-Only (Miss AA vs Clean NN)             +9.13       [+8.28, +9.99]   +0.827    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Early Fusion (Miss NA vs Clean NN)            +0.17       [-0.14, +0.48]   +0.051     0.2802     0.5604 Not Significant 
+Early Fusion (Miss NA vs Clean NN)            +0.17       [-0.14, +0.48]   +0.051     0.2802     0.5604 Not Significant
 Early Fusion (Miss AN vs Clean NN)            +3.56       [+3.00, +4.17]   +0.600    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion (Miss AA vs Clean NN)            +4.76       [+4.11, +5.42]   +0.640    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion (Miss NA vs Clean NN)             +0.65       [+0.53, +0.77]   +0.469    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
@@ -95,28 +95,28 @@ Hybrid Fusion (Miss AN vs Clean NN)           +1.89       [+1.59, +2.21]   +0.48
 Hybrid Fusion (Miss AA vs Clean NN)           +2.42       [+2.06, +2.81]   +0.518    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 
 --- Family 5: Within-Model Degradation Impact (Noise) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
-Energy-Only (Noise NA vs Clean NN)            -0.00       [-0.00, +0.00]   -0.400     0.4497     1.0000 Not Significant 
+Energy-Only (Noise NA vs Clean NN)            +0.00       [+0.00, +0.00]   +0.000     1.0000     1.0000 Not Significant
 Energy-Only (Noise AN vs Clean NN)            +0.44       [+0.25, +0.63]   +0.184   1.08e-04     0.0013 Significant (p_holm < 0.05)
 Energy-Only (Noise AA vs Clean NN)            +0.44       [+0.25, +0.63]   +0.184   1.08e-04     0.0013 Significant (p_holm < 0.05)
-Early Fusion (Noise NA vs Clean NN)           +0.06       [-0.02, +0.15]   +0.061     0.2028     1.0000 Not Significant 
-Early Fusion (Noise AN vs Clean NN)           +0.01       [-0.13, +0.12]   +0.029     0.5467     1.0000 Not Significant 
-Early Fusion (Noise AA vs Clean NN)           +0.09       [-0.06, +0.23]   +0.089     0.0617     0.6169 Not Significant 
-Late Fusion (Noise NA vs Clean NN)            +0.02       [-0.00, +0.04]   +0.062     0.1930     1.0000 Not Significant 
-Late Fusion (Noise AN vs Clean NN)            +0.08       [-0.01, +0.18]   +0.067     0.1626     1.0000 Not Significant 
-Late Fusion (Noise AA vs Clean NN)            +0.10       [+0.00, +0.20]   +0.076     0.1099     0.9889 Not Significant 
-Hybrid Fusion (Noise NA vs Clean NN)          +0.01       [-0.01, +0.02]   +0.036     0.4498     1.0000 Not Significant 
-Hybrid Fusion (Noise AN vs Clean NN)          +0.03       [-0.03, +0.08]   +0.042     0.3752     1.0000 Not Significant 
-Hybrid Fusion (Noise AA vs Clean NN)          +0.03       [-0.03, +0.09]   +0.040     0.4074     1.0000 Not Significant 
+Early Fusion (Noise NA vs Clean NN)           +0.06       [-0.02, +0.15]   +0.061     0.2028     1.0000 Not Significant
+Early Fusion (Noise AN vs Clean NN)           +0.01       [-0.13, +0.12]   +0.029     0.5467     1.0000 Not Significant
+Early Fusion (Noise AA vs Clean NN)           +0.09       [-0.06, +0.23]   +0.089     0.0617     0.6169 Not Significant
+Late Fusion (Noise NA vs Clean NN)            +0.02       [-0.00, +0.04]   +0.062     0.1930     1.0000 Not Significant
+Late Fusion (Noise AN vs Clean NN)            +0.08       [-0.01, +0.18]   +0.067     0.1626     1.0000 Not Significant
+Late Fusion (Noise AA vs Clean NN)            +0.10       [+0.00, +0.20]   +0.076     0.1099     0.9889 Not Significant
+Hybrid Fusion (Noise NA vs Clean NN)          +0.01       [-0.01, +0.02]   +0.036     0.4498     1.0000 Not Significant
+Hybrid Fusion (Noise AN vs Clean NN)          +0.03       [-0.03, +0.08]   +0.042     0.3752     1.0000 Not Significant
+Hybrid Fusion (Noise AA vs Clean NN)          +0.03       [-0.03, +0.09]   +0.040     0.4074     1.0000 Not Significant
 
 --- Family 6: Cross-Degradation Impact (Missingness vs Noise) ---
-Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision        
+Comparison                               Mean D (W)               95% CI     r_rb      p_raw     p_holm Decision
 ----------------------------------------------------------------------------------------------------------------------
-Energy-Only (Miss NA vs Noise NA Degradation)      +0.00       [+0.00, +0.00]   +0.000     1.0000     1.0000 Not Significant 
+Energy-Only (Miss NA vs Noise NA Degradation)      +0.00       [+0.00, +0.00]   +0.000     1.0000     1.0000 Not Significant
 Energy-Only (Miss AN vs Noise AN Degradation)      +8.69       [+7.84, +9.59]   +0.796    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Energy-Only (Miss AA vs Noise AA Degradation)      +8.69       [+7.86, +9.58]   +0.796    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
-Early Fusion (Miss NA vs Noise NA Degradation)      +0.11       [-0.21, +0.43]   +0.017     0.7148     1.0000 Not Significant 
+Early Fusion (Miss NA vs Noise NA Degradation)      +0.11       [-0.21, +0.43]   +0.017     0.7148     1.0000 Not Significant
 Early Fusion (Miss AN vs Noise AN Degradation)      +3.56       [+2.98, +4.16]   +0.580    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Early Fusion (Miss AA vs Noise AA Degradation)      +4.66       [+4.01, +5.34]   +0.618    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
 Late Fusion (Miss NA vs Noise NA Degradation)      +0.63       [+0.51, +0.75]   +0.459    < 1e-16    < 1e-16 Significant (p_holm < 0.05)
@@ -131,14 +131,10 @@ Hybrid Fusion (Miss AA vs Noise AA Degradation)      +2.39       [+2.03, +2.77] 
 --------------------------------------------------------------------------------
 
 1. Early Fusion Superiority on Clean Data:
-   Under clean conditions (N-N), Early Fusion significantly outperforms all other
-   models:
-   - Early Fusion vs Energy-Only: Mean Diff = -6.25 W [-7.47, -5.04], r_rb = -0.560,
-     Wilcoxon p_holm = 8.52e-28 (HLN-DM p = 2.45e-04).
-   - Early Fusion vs Late Fusion: Mean Diff = -7.27 W [-8.35, -6.19], r_rb = -0.638,
-     Wilcoxon p_holm = 1.34e-37 (HLN-DM p = 2.76e-07).
-   - Early Fusion vs Hybrid Fusion: Mean Diff = -10.55 W [-11.83, -9.28], r_rb = -0.732,
-     Wilcoxon p_holm = 3.86e-51 (HLN-DM p = 2.70e-10).
+   Under clean conditions (N-N), Early Fusion significantly outperforms all other models:
+   - Early Fusion vs Energy-Only:  Mean Diff = -6.25 W [-7.05, -5.49], r_rb = -0.639, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 8.15e-05) -> Significant (p_holm < 0.05)
+   - Early Fusion vs Late Fusion:   Mean Diff = -7.27 W [-8.04, -6.41], r_rb = -0.719, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 6.99e-06) -> Significant (p_holm < 0.05)
+   - Early Fusion vs Hybrid Fusion: Mean Diff = -10.55 W [-11.45, -9.60], r_rb = -0.811, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 1.14e-08) -> Significant (p_holm < 0.05)
    Finding: The clean-data accuracy advantage of Early Fusion is statistically
    distinguishable and confirmed by both non-parametric and time-series tests.
 
@@ -146,40 +142,41 @@ Hybrid Fusion (Miss AA vs Noise AA Degradation)      +2.39       [+2.03, +2.77] 
    Even under the most severe degradation conditions (A-A joint missingness),
    Early Fusion maintains a statistically significant performance lead over all
    three alternative architectures:
-   - vs Energy-Only: Mean Diff = -10.62 W [-12.01, -9.26], p_holm = 2.26e-41.
-   - vs Late Fusion: Mean Diff = -6.75 W [-7.78, -5.73], p_holm = 1.25e-33.
-   - vs Hybrid Fusion: Mean Diff = -8.21 W [-9.50, -6.95], p_holm = 5.25e-30.
+   - vs Energy-Only:  Mean Diff = -10.62 W [-11.64, -9.67], r_rb = -0.818, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 8.50e-09) -> Significant (p_holm < 0.05)
+   - vs Late Fusion:   Mean Diff = -6.75 W [-7.64, -5.81], r_rb = -0.642, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 1.19e-04) -> Significant (p_holm < 0.05)
+   - vs Hybrid Fusion: Mean Diff = -8.21 W [-9.24, -7.17], r_rb = -0.675, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 7.82e-05) -> Significant (p_holm < 0.05)
 
 3. Modality Sensitivity Asymmetry Under Missingness:
    Within-model degradation comparisons confirm statistically that electricity
    missingness causes significantly greater degradation than weather missingness:
-   - For all four architectures, electricity missingness (A-N vs N-N) is highly
-     statistically significant (p_holm < 1e-15).
-   - Weather missingness (N-A vs N-N) produces small error increments that are
-     marginally significant or non-significant after family correction:
-     * Energy-Only: Exactly 0.0 W (Control identity verified, p_holm = 1.0).
-     * Early Fusion: Mean Diff = +0.17 W [-0.14, +0.48], p_raw = 0.2802, p_holm = 0.5604 (Not Significant).
-     * Late Fusion: Mean Diff = +0.65 W [+0.53, +0.77], p_holm < 1e-15 (Significant).
-     * Hybrid Fusion: Mean Diff = +0.36 W [+0.29, +0.44], p_holm < 1e-15 (Significant).
-   Weather degradation produces very small error changes that are either
-   statistically indistinguishable from zero (Early Fusion, p_holm = 0.5604) or
-   have small effect sizes (<= +0.65 W), whereas electricity degradation produces
-   large, highly significant error surges (+1.89 W to +9.13 W, p_holm < 1e-15).
+   - Electricity missingness (A-N vs Clean NN):
+     * Energy-Only:   Mean Diff = +9.13 W [+8.29, +10.00], r_rb = +0.827, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 3.81e-13) -> Significant (p_holm < 0.05)
+     * Early Fusion:  Mean Diff = +3.56 W [+3.00, +4.17], r_rb = +0.600, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0014) -> Significant (p_holm < 0.05)
+     * Late Fusion:   Mean Diff = +3.40 W [+2.86, +4.01], r_rb = +0.460, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0049) -> Significant (p_holm < 0.05)
+     * Hybrid Fusion: Mean Diff = +1.89 W [+1.59, +2.21], r_rb = +0.480, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0038) -> Significant (p_holm < 0.05)
+   - Weather missingness (N-A vs Clean NN):
+     * Energy-Only:   Mean Diff = +0.00 W [+0.00, +0.00], r_rb = +0.000, Wilcoxon p_raw = 1.0000, p_holm = 1.0000, p_fdr = 1.0000 (HLN-DM p = 1.0000) -> Not Significant
+     * Early Fusion:  Mean Diff = +0.17 W [-0.14, +0.48], r_rb = +0.051, Wilcoxon p_raw = 0.2802, p_holm = 0.5604, p_fdr = 0.3214 (HLN-DM p = 0.7273) -> Not Significant
+     * Late Fusion:   Mean Diff = +0.65 W [+0.53, +0.77], r_rb = +0.469, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0085) -> Significant (p_holm < 0.05)
+     * Hybrid Fusion: Mean Diff = +0.36 W [+0.29, +0.44], r_rb = +0.435, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0163) -> Significant (p_holm < 0.05)
+   Synthesis: Weather degradation produces very small error changes that are either
+   statistically indistinguishable from zero (Energy-Only exact control identity p_holm = 1.0;
+   Early Fusion p_holm = 0.5604) or of minor magnitude (<= +0.65 W),
+   whereas electricity degradation causes severe surges (+1.89 W to +9.13 W, p_holm < 1e-15).
 
 4. Missingness vs Noise Disruption Asymmetry:
    Cross-degradation paired testing (Family 6) confirms that 30% MCAR missingness
-   causes statistically greater error increases than 20% Gaussian noise for all
-   models under electricity (A-N) and joint (A-A) degradation:
-   - Energy-Only AA: Miss degradation exceeds Noise by +8.69 W (p_holm = 2.38e-67).
-   - Early Fusion AA: Miss degradation exceeds Noise by +4.66 W (p_holm = 4.23e-43).
-   - Late Fusion AA: Miss degradation exceeds Noise by +4.14 W (p_holm = 2.89e-40).
-   - Hybrid Fusion AA: Miss degradation exceeds Noise by +2.39 W (p_holm = 1.48e-28).
+   causes statistically greater error increases than 20% Gaussian noise under joint (A-A) degradation:
+   - Energy-Only AA:  Mean Diff = +8.69 W [+7.86, +9.58], r_rb = +0.796, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 4.39e-12) -> Significant (p_holm < 0.05)
+   - Early Fusion AA: Mean Diff = +4.66 W [+4.01, +5.34], r_rb = +0.618, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 2.26e-05) -> Significant (p_holm < 0.05)
+   - Late Fusion AA:  Mean Diff = +4.14 W [+3.51, +4.84], r_rb = +0.509, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0035) -> Significant (p_holm < 0.05)
+   - Hybrid Fusion AA:Mean Diff = +2.39 W [+2.03, +2.77], r_rb = +0.525, Wilcoxon p_raw = < 1e-16, p_holm = < 1e-16, p_fdr = < 1e-16 (HLN-DM p = 0.0026) -> Significant (p_holm < 0.05)
 
-5. Noise Sensitivity is Negligible Across All Architectures:
+5. Noise Sensitivity Across Architectures:
    Under 20% additive Gaussian noise (Family 5), error increases are minute
-   (Mean Diff <= +0.44 W, relative delta < 0.6%). While detectable in some
-   paired rank tests due to N=587, effect sizes (dz < 0.15) indicate negligible
-   practical engineering impact.
+   (Max Mean Diff = +0.44 W, Max relative delta = 0.56%, Max Cohen's dz = 0.1879).
+   Only 2 / 12 tests reach significance after Holm-Bonferroni correction,
+   confirming that low-magnitude Gaussian noise produces minimal practical engineering degradation.
 
 --------------------------------------------------------------------------------
 4. SENSITIVITY AND COMPLEMENTARY TEST AGREEMENT

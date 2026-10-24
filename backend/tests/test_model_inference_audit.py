@@ -165,12 +165,97 @@ class TestModelInferenceAudit(unittest.TestCase):
         for m in models:
             calib_art = self.uncertainty_dir / f"calibration_predictions_{m}.npz"
             self.assertTrue(calib_art.exists(), f"Calibration artifact for {m} must exist")
-            npz = np.load(calib_art)
-            self.assertIn("quantiles_q_h", npz)
-            q_h = npz["quantiles_q_h"]
-            self.assertEqual(q_h.shape, (24,))
-            self.assertTrue(np.all(q_h > 0), f"Quantiles for {m} must be positive")
-            self.assertFalse(np.isnan(q_h).any())
+            with np.load(calib_art) as npz:
+                self.assertIn("quantiles_q_h", npz)
+                q_h = npz["quantiles_q_h"]
+                self.assertEqual(q_h.shape, (24,))
+                self.assertTrue(np.all(q_h > 0), f"Quantiles for {m} must be positive")
+                self.assertFalse(np.isnan(q_h).any())
+
+    def test_energy_only_control_invariance_and_batch_consistency(self):
+        """
+        Regression test for Step 7 statistical audit:
+        1. Energy-Only model does not take weather input.
+        2. Clean evaluation evaluates in batches of 64. Robustness inference must use
+           the exact same batch size (64), avoiding floating-point GEMM differences.
+        3. Predictions under NN, NA (missingness), and NA (noise) must match exactly
+           with max absolute difference of 0.0 (bit-for-bit exact identity).
+        4. Scaled predictions inverse-scaled to Watts match clean Watts within floating-point
+           tolerance (< 1e-4 W).
+        5. Invariance holds for any weather degradation when electricity input is unchanged.
+        """
+        test_seq_dir = PROJECT_ROOT / "data" / "processed" / "sequences" / "test"
+        clean_npz_path = PROJECT_ROOT / "outputs" / "predictions" / "energy_only" / "test_predictions.npz"
+        self.assertTrue(clean_npz_path.exists(), "Clean test_predictions.npz must exist")
+
+        with np.load(clean_npz_path) as clean_data:
+            clean_preds_scaled = clean_data["predictions_scaled"]
+            clean_preds_watts = clean_data["predictions_watts"]
+
+        with np.load(test_seq_dir / "X_energy.npz") as f_e:
+            X_energy = f_e["data"]
+        with np.load(test_seq_dir / "X_weather.npz") as f_w:
+            X_weather = f_w["data"]
+
+        # Load Energy-Only model
+        ckpt_path = self.models_dir / "energy_only" / "best_model.pt"
+        model = EnergyOnlyLSTM()
+        ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+        state = ckpt["model_state_dict"] if "model_state_dict" in ckpt else ckpt
+        model.load_state_dict(state)
+        model.eval()
+
+        from src.robustness.missingness_experiment import run_inference as run_inference_miss
+        from src.robustness.noise_experiment import run_inference as run_inference_noise
+
+        # 1. Clean test predictions match exactly with batch_size=64
+        preds_clean_b64 = run_inference_miss(model, "energy_only", X_energy, X_weather, batch_size=64)
+        max_diff_clean = float(np.max(np.abs(preds_clean_b64 - clean_preds_scaled)))
+        self.assertEqual(
+            max_diff_clean, 0.0,
+            f"Batch-64 inference must match clean test_predictions.npz exactly, got max diff: {max_diff_clean}"
+        )
+
+        # 2. Missingness NA condition invariance
+        miss_dir = PROJECT_ROOT / "data" / "processed" / "degraded" / "missingness_30"
+        mask_w_path = miss_dir / "mask_weather_test.npz"
+        self.assertTrue(mask_w_path.exists(), "mask_weather_test.npz must exist")
+        with np.load(mask_w_path) as f_mask:
+            mask_w = f_mask["data"]
+        X_weather_miss = X_weather.copy()
+        for i in range(len(X_weather)):
+            X_weather_miss[i, mask_w[i], :] = 0.0
+
+        preds_na_miss = run_inference_miss(model, "energy_only", X_energy, X_weather_miss, batch_size=64)
+        diff_miss = float(np.max(np.abs(preds_clean_b64 - preds_na_miss)))
+        self.assertEqual(
+            diff_miss, 0.0,
+            f"Energy-Only predictions must be identical between NN and NA missingness, got max diff: {diff_miss}"
+        )
+
+        # 3. Noise NA condition invariance
+        noise_dir = PROJECT_ROOT / "data" / "processed" / "degraded" / "noise_20"
+        noise_w_path = noise_dir / "noise_weather_test.npz"
+        self.assertTrue(noise_w_path.exists(), "noise_weather_test.npz must exist")
+        with np.load(noise_w_path) as f_noise:
+            noise_w = f_noise["data"]
+        X_weather_noisy = X_weather + noise_w
+
+        preds_na_noise = run_inference_noise(model, "energy_only", X_energy, X_weather_noisy, batch_size=64)
+        diff_noise = float(np.max(np.abs(preds_clean_b64 - preds_na_noise)))
+        self.assertEqual(
+            diff_noise, 0.0,
+            f"Energy-Only predictions must be identical between NN and NA noise, got max diff: {diff_noise}"
+        )
+
+        # 4. Scaled to Watts inverse-scaling invariance
+        e_scaler = joblib.load(self.scalers_dir / "energy_scaler.pkl")
+        watts_clean = preds_clean_b64 * e_scaler.scale_[0] + e_scaler.mean_[0]
+        diff_watts = float(np.max(np.abs(watts_clean - clean_preds_watts)))
+        self.assertLess(
+            diff_watts, 1e-4,
+            f"Inverse-scaled Watts must match within floating-point tolerance (1e-4 W), got max diff: {diff_watts}"
+        )
 
 
 if __name__ == "__main__":
