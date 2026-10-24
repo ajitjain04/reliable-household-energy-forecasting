@@ -1,6 +1,6 @@
 {
   "experiment": "Step 5B \u2014 20% Additive Gaussian Noise",
-  "timestamp": "2026-10-06T13:47:51.333316",
+  "timestamp": "2026-10-24T23:33:15.342170",
   "noise_model": "AWGN (standardized space, eta=0.20)",
   "conditions": {
     "NN": "N\u2013N (Clean)",

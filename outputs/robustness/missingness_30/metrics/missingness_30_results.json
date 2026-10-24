@@ -1,6 +1,6 @@
 {
   "experiment": "Step 5A \u2014 30% MCAR Missingness",
-  "timestamp": "2026-10-05T11:09:24.111537",
+  "timestamp": "2026-10-24T23:32:59.683920",
   "conditions": {
     "NN": "N\u2013N (Clean)",
     "NA": "N\u2013A (Degraded Weather)",

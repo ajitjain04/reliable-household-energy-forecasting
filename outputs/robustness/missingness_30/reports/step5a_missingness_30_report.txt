@@ -3,7 +3,7 @@ STEP 5A — CONTROLLED 30% MCAR MISSINGNESS EXPERIMENT REPORT
 Reliable Multimodal Household Energy Forecasting
 ================================================================================
 
-Generated: 2026-10-05 11:09:28
+Generated: 2026-10-24 23:33:00
 
 --------------------------------------------------------------------------------
 1. EXPERIMENTAL OBJECTIVE
