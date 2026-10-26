@@ -16,9 +16,12 @@ import asyncio
 import calendar
 import concurrent.futures
 import io
+import logging
 import math
 import os
 import re
+import shutil
+import sys
 import zlib
 from datetime import date
 from typing import Any, Dict, List, Optional, Tuple
@@ -40,6 +43,8 @@ from backend.app.schemas.bills import (
     MonthlyConsumptionRecord,
     validate_and_sort_billing_records,
 )
+
+logger = logging.getLogger(__name__)
 
 MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB limit
 MAX_BILL_FILE_SIZE_BYTES = MAX_PDF_SIZE_BYTES
@@ -174,7 +179,15 @@ class BillParserService:
                 pytesseract.pytesseract.tesseract_cmd = r"D:\Apps\tesseract.exe"
             pytesseract.get_tesseract_version()
             return pytesseract
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Tesseract OCR initialization failed: %s (os.name=%s, sys.platform=%s, which_tesseract=%s, usr_bin_tesseract_exists=%s)",
+                exc,
+                os.name,
+                sys.platform,
+                shutil.which("tesseract"),
+                os.path.exists("/usr/bin/tesseract"),
+            )
             return None
 
     def _extract_text_via_ocr(
