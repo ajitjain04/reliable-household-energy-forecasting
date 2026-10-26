@@ -156,7 +156,6 @@ class BillParserService:
     # -------------------------------------------------------------------------
     # 2. Windows Native OCR Fallback (Scanned / Image-Only PDFs)
     # -------------------------------------------------------------------------
-    def _extract_text_via_ocr(
         
     def _extract_text_via_ocr(
         self,
