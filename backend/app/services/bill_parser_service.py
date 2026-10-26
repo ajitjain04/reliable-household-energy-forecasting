@@ -17,6 +17,7 @@ import calendar
 import concurrent.futures
 import io
 import math
+import os
 import re
 import zlib
 from datetime import date
@@ -157,104 +158,155 @@ class BillParserService:
     # 2. Windows Native OCR Fallback (Scanned / Image-Only PDFs)
     # -------------------------------------------------------------------------
         
+    @staticmethod
+    def _get_pytesseract() -> Any:
+        """
+        Configure and return the pytesseract module if available.
+        Respects TESSERACT_CMD environment variable and checks D:\\Apps\\tesseract.exe on Windows.
+        """
+        try:
+            import os
+            import pytesseract
+            tesseract_cmd = os.getenv("TESSERACT_CMD")
+            if tesseract_cmd:
+                pytesseract.pytesseract.tesseract_cmd = tesseract_cmd
+            elif os.name == "nt" and os.path.isfile(r"D:\Apps\tesseract.exe"):
+                pytesseract.pytesseract.tesseract_cmd = r"D:\Apps\tesseract.exe"
+            pytesseract.get_tesseract_version()
+            return pytesseract
+        except Exception:
+            return None
+
     def _extract_text_via_ocr(
         self,
         file_bytes: bytes,
         max_pages: int = 5,
     ) -> Tuple[str, List[str], int, Dict[str, Any]]:
         """
-        Extract text from scanned PDF pages using Tesseract OCR.
-        Supports Linux deployments and limits processing to max_pages.
+        Render PDF pages to raster bitmaps via pypdfium2 and extract text.
+        On Windows: Uses Windows Native OCR with spatial deskewed row reconstruction,
+        falling back to Tesseract OCR if winrt is unavailable.
+        On Linux: Uses Tesseract OCR (with language pack fallback).
+        Strictly fallback: used only when digital PDF text stream contains < 15 alphanumeric characters.
         """
         warnings: List[str] = []
         ocr_diag: Dict[str, Any] = {
             "page_dimensions": [],
             "characters_per_page": [],
             "ocr_runtime_available": False,
-            "ocr_engine": "Tesseract",
+            "ocr_engine": "Windows.Media.Ocr" if os.name == "nt" else "Tesseract",
         }
 
         if pdfium is None:
             warnings.append(
-                "PDF rendering library (pypdfium2) is unavailable. "
-                "Scanned PDF OCR is disabled."
+                "PDF page rendering library (pypdfium2) is not available. Scanned PDF OCR fallback disabled."
             )
-            return "", warnings, 0, ocr_diag
-
-        try:
-            import pytesseract
-            pytesseract.get_tesseract_version()
-        except Exception as exc:
-            warnings.append(f"Tesseract OCR is unavailable: {exc}")
-            ocr_diag["error"] = str(exc)
             return "", warnings, 0, ocr_diag
 
         try:
             pdf = pdfium.PdfDocument(file_bytes)
         except Exception as exc:
-            warnings.append(f"Failed to open PDF for OCR: {exc}")
+            warnings.append(f"Failed to open PDF document for page rendering: {str(exc)}")
             return "", warnings, 0, ocr_diag
 
-        total_pages = len(pdf)
-        pages_to_process = min(total_pages, max_pages)
-
-        if total_pages > max_pages:
+        total_doc_pages = len(pdf)
+        pages_to_process = min(total_doc_pages, max_pages)
+        if total_doc_pages > max_pages:
             warnings.append(
-                f"Document contains {total_pages} pages; "
-                f"only the first {max_pages} pages were processed by OCR."
+                f"Document contains {total_doc_pages} pages; processed first {max_pages} pages for OCR extraction."
             )
 
-        ocr_diag["ocr_runtime_available"] = True
-        extracted_page_texts: List[str] = []
-
-        for page_idx in range(pages_to_process):
+        # 1. Try Windows Native OCR on Windows
+        if os.name == "nt":
             try:
-                page = pdf[page_idx]
-                pil_page = page.render(scale=2.0).to_pil()
+                import winrt.windows.graphics.imaging as winrt_imaging
+                import winrt.windows.media.ocr as winrt_ocr
+                import winrt.windows.storage.streams as winrt_streams
 
-                if ImageOps is not None:
-                    pil_page = ImageOps.exif_transpose(pil_page)
+                engine = winrt_ocr.OcrEngine.try_create_from_user_profile_languages()
+                if not engine:
+                    avail = getattr(winrt_ocr.OcrEngine, "available_recognizer_languages", None)
+                    if avail and len(avail) > 0:
+                        engine = winrt_ocr.OcrEngine.try_create_from_language(avail[0])
 
-                pil_page = pil_page.convert("L")
-                if ImageOps is not None:
-                    pil_page = ImageOps.autocontrast(pil_page)
+                if engine:
+                    ocr_diag["ocr_runtime_available"] = True
+                    ocr_diag["ocr_engine"] = "Windows.Media.Ocr"
+                    extracted_page_texts: List[str] = []
+                    for page_idx in range(pages_to_process):
+                        try:
+                            page = pdf[page_idx]
+                            pil_page = page.render(scale=2.0).to_pil().convert("L")
+                            page_text, page_diag = self._ocr_pil_image(pil_page, engine, winrt_imaging, winrt_streams)
+                            extracted_page_texts.append(page_text)
+                            ocr_diag["page_dimensions"].append(page_diag["dimensions"])
+                            ocr_diag["characters_per_page"].append(page_diag["characters"])
+                        except Exception as page_exc:
+                            warnings.append(f"OCR processing failed on page {page_idx + 1}: {str(page_exc)}")
 
+                    combined_text = "\n".join(extracted_page_texts)
+                    return combined_text, warnings, pages_to_process, ocr_diag
+            except Exception:
+                pass
+
+        # 2. Try Tesseract OCR (on Linux, or fallback on Windows)
+        pytesseract_mod = self._get_pytesseract()
+        if pytesseract_mod is not None:
+            ocr_diag["ocr_runtime_available"] = True
+            ocr_diag["ocr_engine"] = "Tesseract"
+            extracted_page_texts = []
+            for page_idx in range(pages_to_process):
                 try:
-                    page_text = pytesseract.image_to_string(
-                        pil_page,
-                        lang="eng+mar+hin",
-                        config="--oem 3 --psm 6",
-                    )
-                except Exception as multilingual_exc:
+                    page = pdf[page_idx]
+                    pil_page = page.render(scale=2.0).to_pil()
+                    if ImageOps is not None:
+                        pil_page = ImageOps.exif_transpose(pil_page)
+                    pil_page = pil_page.convert("L")
+                    if ImageOps is not None:
+                        pil_page = ImageOps.autocontrast(pil_page)
+
+                    try:
+                        page_text = pytesseract_mod.image_to_string(
+                            pil_page,
+                            lang="eng+mar+hin",
+                            config="--oem 3 --psm 6",
+                        )
+                    except Exception as multilingual_exc:
+                        warnings.append(
+                            f"Multilingual PDF OCR failed; retrying English OCR: {multilingual_exc}"
+                        )
+                        page_text = pytesseract_mod.image_to_string(
+                            pil_page,
+                            lang="eng",
+                            config="--oem 3 --psm 6",
+                        )
+
+                    page_text = page_text.strip()
+                    extracted_page_texts.append(page_text)
+                    ocr_diag["page_dimensions"].append([pil_page.width, pil_page.height])
+                    ocr_diag["characters_per_page"].append(len(page_text))
+                except Exception as page_exc:
                     warnings.append(
-                        "Multilingual PDF OCR failed; retrying English OCR: "
-                        f"{multilingual_exc}"
+                        f"OCR processing failed on PDF page {page_idx + 1}: {page_exc}"
                     )
-                    page_text = pytesseract.image_to_string(
-                        pil_page,
-                        lang="eng",
-                        config="--oem 3 --psm 6",
-                    )
+                    extracted_page_texts.append("")
+                    ocr_diag["page_dimensions"].append([])
+                    ocr_diag["characters_per_page"].append(0)
 
-                page_text = page_text.strip()
-                extracted_page_texts.append(page_text)
+            combined_text = "\n".join(extracted_page_texts)
+            return combined_text, warnings, pages_to_process, ocr_diag
 
-                ocr_diag["page_dimensions"].append(
-                    [pil_page.width, pil_page.height]
-                )
-                ocr_diag["characters_per_page"].append(len(page_text))
-
-            except Exception as page_exc:
-                warnings.append(
-                    f"OCR processing failed on PDF page {page_idx + 1}: "
-                    f"{page_exc}"
-                )
-                extracted_page_texts.append("")
-                ocr_diag["page_dimensions"].append([])
-                ocr_diag["characters_per_page"].append(0)
-
-        combined_text = "\n".join(extracted_page_texts)
-        return combined_text, warnings, pages_to_process, ocr_diag
+        # Neither OCR engine available
+        ocr_diag["ocr_runtime_available"] = False
+        if os.name == "nt":
+            warnings.append(
+                "Windows Native OCR runtime bindings (winrt) are not available. Scanned PDF OCR fallback disabled."
+            )
+        else:
+            warnings.append(
+                "Tesseract OCR is unavailable on this server. Scanned PDF OCR is disabled."
+            )
+        return "", warnings, pages_to_process, ocr_diag
 
 
     def _ocr_pil_image(
@@ -365,160 +417,172 @@ class BillParserService:
         file_bytes: bytes,
     ) -> Tuple[str, List[str], Dict[str, Any]]:
         """
-        Extract text from a JPEG or PNG electricity bill using Tesseract OCR.
-        Works on Linux servers such as Render and preserves image preprocessing
-        and rotation recovery.
+        Extract text from an uploaded image document (JPEG or PNG).
+        On Windows: Uses Windows Native OCR with spatial deskewed row reconstruction,
+        falling back to Tesseract OCR if winrt is unavailable.
+        On Linux: Uses Tesseract OCR with image preprocessing and rotation recovery.
         """
         warnings: List[str] = []
         ocr_diag: Dict[str, Any] = {
             "page_dimensions": [],
             "characters_per_page": [],
             "ocr_runtime_available": False,
-            "ocr_engine": "Tesseract",
+            "ocr_engine": "Windows.Media.Ocr" if os.name == "nt" else "Tesseract",
         }
 
         if Image is None:
-            warnings.append(
-                "Image processing library (Pillow) is unavailable. Image OCR disabled."
-            )
-            return "", warnings, ocr_diag
-
-        try:
-            import pytesseract
-
-            # Confirm that the native Tesseract executable is available.
-            pytesseract.get_tesseract_version()
-        except Exception as exc:
-            warnings.append(
-                f"Tesseract OCR is unavailable on this server: {exc}"
-            )
-            ocr_diag["error"] = str(exc)
+            warnings.append("Image processing library (Pillow) is not available. Image OCR disabled.")
             return "", warnings, ocr_diag
 
         try:
             raw_img = Image.open(io.BytesIO(file_bytes))
             raw_img.load()
         except Exception as exc:
-            raise ValueError(
-                f"Uploaded image file cannot be opened or is corrupted: {exc}"
-            )
+            raise ValueError(f"Uploaded image file cannot be opened or is corrupted: {str(exc)}")
 
         orig_w, orig_h = raw_img.width, raw_img.height
         ocr_diag["original_dimensions"] = [orig_w, orig_h]
 
-        # Normalize camera orientation and prepare the image.
+        # 1. Image Preprocessing (matches f1a0453)
         try:
             if ImageOps is not None:
                 img = ImageOps.exif_transpose(raw_img)
             else:
                 img = raw_img
 
-            # Place transparent images on a white background.
-            if (
-                img.mode in ("RGBA", "LA")
-                or (img.mode == "P" and "transparency" in img.info)
-            ):
+            if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
                 rgba_img = img.convert("RGBA")
-                white_bg = Image.new(
-                    "RGBA", rgba_img.size, (255, 255, 255, 255)
-                )
-                img = Image.alpha_composite(
-                    white_bg, rgba_img
-                ).convert("RGB")
+                white_bg = Image.new("RGBA", rgba_img.size, (255, 255, 255, 255))
+                img = Image.alpha_composite(white_bg, rgba_img).convert("RGB")
 
-            # Keep the image within a reasonable OCR resolution.
             max_dim = max(img.width, img.height)
             if max_dim > 4000:
                 scale = 4000.0 / max_dim
-                img = img.resize(
-                    (
-                        max(1, int(img.width * scale)),
-                        max(1, int(img.height * scale)),
-                    ),
-                    Image.Resampling.LANCZOS,
-                )
+                new_w, new_h = max(1, int(img.width * scale)), max(1, int(img.height * scale))
+                img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             elif max_dim < 2200 and min(img.width, img.height) >= 600:
                 scale = min(2.5, 2200.0 / max_dim)
-                img = img.resize(
-                    (
-                        max(1, int(img.width * scale)),
-                        max(1, int(img.height * scale)),
-                    ),
-                    Image.Resampling.LANCZOS,
-                )
+                new_w, new_h = int(img.width * scale), int(img.height * scale)
+                img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
 
-            img_gray = img.convert("L")
-            if ImageOps is not None:
-                img_gray = ImageOps.autocontrast(img_gray)
+            img_gray = img.convert("L") if img.mode != "L" else img
+        except Exception:
+            img_gray = raw_img.convert("L") if raw_img.mode != "L" else raw_img
 
-        except Exception as exc:
-            warnings.append(
-                f"Image preprocessing warning; using grayscale fallback: {exc}"
-            )
-            img_gray = raw_img.convert("L")
-
-        ocr_diag["ocr_runtime_available"] = True
-
-        def recognize(pil_img: Any) -> str:
-            """Recognize English and Indian-language bill text."""
+        # 2. Try Windows Native OCR on Windows
+        if os.name == "nt":
             try:
-                return pytesseract.image_to_string(
-                    pil_img,
-                    lang="eng+mar+hin",
-                    config="--oem 3 --psm 6",
-                )
-            except Exception as exc:
-                # Some installations may not have every language pack.
-                warnings.append(
-                    f"Multilingual OCR failed; retrying English OCR: {exc}"
-                )
-                return pytesseract.image_to_string(
-                    pil_img,
-                    lang="eng",
-                    config="--oem 3 --psm 6",
-                )
+                import winrt.windows.graphics.imaging as winrt_imaging
+                import winrt.windows.media.ocr as winrt_ocr
+                import winrt.windows.storage.streams as winrt_streams
 
-        try:
-            best_text = recognize(img_gray).strip()
-        except Exception as exc:
-            warnings.append(f"Tesseract image OCR failed: {exc}")
-            ocr_diag["error"] = str(exc)
-            return "", warnings, ocr_diag
+                engine = winrt_ocr.OcrEngine.try_create_from_user_profile_languages()
+                if not engine:
+                    try:
+                        avail = getattr(winrt_ocr.OcrEngine, "available_recognizer_languages", None)
+                        if avail and len(avail) > 0:
+                            engine = winrt_ocr.OcrEngine.try_create_from_language(avail[0])
+                    except Exception:
+                        pass
 
-        best_alnum = len(re.findall(r"[A-Za-z0-9]", best_text))
-        best_dimensions = [img_gray.width, img_gray.height]
+                if engine:
+                    ocr_diag["ocr_runtime_available"] = True
+                    ocr_diag["ocr_engine"] = "Windows.Media.Ocr"
 
-        # Try alternate orientations if the first result is too short.
-        if best_alnum < 30:
-            for angle in (270, 90, 180):
+                    best_text, best_diag = self._ocr_pil_image(img_gray, engine, winrt_imaging, winrt_streams)
+                    best_alnum = len(re.findall(r"[A-Za-z0-9]", best_text))
+
+                    # Multi-angle rotation fallback: if upright OCR yielded < 30 alphanumeric characters,
+                    # test 270°, 90°, 180° rotations in case document was photographed/scanned sideways without EXIF
+                    if best_alnum < 30:
+                        for angle in (270, 90, 180):
+                            try:
+                                rot_img = img_gray.rotate(angle, expand=True)
+                                rot_text, rot_diag = self._ocr_pil_image(rot_img, engine, winrt_imaging, winrt_streams)
+                                rot_alnum = len(re.findall(r"[A-Za-z0-9]", rot_text))
+                                if rot_alnum > best_alnum:
+                                    best_text, best_diag, best_alnum = rot_text, rot_diag, rot_alnum
+                                if best_alnum >= 30:
+                                    break
+                            except Exception:
+                                continue
+
+                    ocr_diag["page_dimensions"].append(best_diag["dimensions"])
+                    ocr_diag["characters_per_page"].append(best_diag["characters"])
+                    return best_text, warnings, ocr_diag
+            except Exception:
+                pass
+
+        # 3. Try Tesseract OCR (on Linux or as fallback on Windows)
+        pytesseract_mod = self._get_pytesseract()
+        if pytesseract_mod is not None:
+            ocr_diag["ocr_runtime_available"] = True
+            ocr_diag["ocr_engine"] = "Tesseract"
+
+            if ImageOps is not None:
+                img_gray_tess = ImageOps.autocontrast(img_gray)
+            else:
+                img_gray_tess = img_gray
+
+            def recognize(pil_img: Any) -> str:
                 try:
-                    rotated = img_gray.rotate(angle, expand=True)
-                    rotated_text = recognize(rotated).strip()
-                    rotated_alnum = len(
-                        re.findall(r"[A-Za-z0-9]", rotated_text)
+                    return pytesseract_mod.image_to_string(
+                        pil_img,
+                        lang="eng+mar+hin",
+                        config="--oem 3 --psm 6",
                     )
-
-                    if rotated_alnum > best_alnum:
-                        best_text = rotated_text
-                        best_alnum = rotated_alnum
-                        best_dimensions = [rotated.width, rotated.height]
-
-                    if best_alnum >= 30:
-                        break
                 except Exception as exc:
-                    warnings.append(
-                        f"OCR rotation recovery at {angle} degrees failed: {exc}"
+                    warnings.append(f"Multilingual OCR failed; retrying English OCR: {exc}")
+                    return pytesseract_mod.image_to_string(
+                        pil_img,
+                        lang="eng",
+                        config="--oem 3 --psm 6",
                     )
 
-        ocr_diag["page_dimensions"].append(best_dimensions)
-        ocr_diag["characters_per_page"].append(len(best_text))
+            try:
+                best_text = recognize(img_gray_tess).strip()
+            except Exception as exc:
+                warnings.append(f"Tesseract image OCR failed: {exc}")
+                ocr_diag["error"] = str(exc)
+                return "", warnings, ocr_diag
 
-        if not best_text:
+            best_alnum = len(re.findall(r"[A-Za-z0-9]", best_text))
+            best_dimensions = [img_gray_tess.width, img_gray_tess.height]
+
+            if best_alnum < 30:
+                for angle in (270, 90, 180):
+                    try:
+                        rotated = img_gray_tess.rotate(angle, expand=True)
+                        rotated_text = recognize(rotated).strip()
+                        rotated_alnum = len(re.findall(r"[A-Za-z0-9]", rotated_text))
+                        if rotated_alnum > best_alnum:
+                            best_text = rotated_text
+                            best_alnum = rotated_alnum
+                            best_dimensions = [rotated.width, rotated.height]
+                        if best_alnum >= 30:
+                            break
+                    except Exception as exc:
+                        warnings.append(f"OCR rotation recovery at {angle} degrees failed: {exc}")
+
+            ocr_diag["page_dimensions"].append(best_dimensions)
+            ocr_diag["characters_per_page"].append(len(best_text))
+
+            if not best_text:
+                warnings.append("Tesseract did not detect readable text in the uploaded image.")
+
+            return best_text, warnings, ocr_diag
+
+        # 4. Neither engine available
+        ocr_diag["ocr_runtime_available"] = False
+        if os.name == "nt":
             warnings.append(
-                "Tesseract did not detect readable text in the uploaded image."
+                "Windows Native OCR runtime bindings (winrt) are not available. Image OCR disabled."
             )
-
-        return best_text, warnings, ocr_diag
+        else:
+            warnings.append(
+                "Tesseract OCR is unavailable on this server. Image OCR disabled."
+            )
+        return "", warnings, ocr_diag
 
 
     # -------------------------------------------------------------------------
@@ -715,7 +779,7 @@ class BillParserService:
         if is_ocr:
             raw_meta.update({
                 "ocr_applied": True,
-                "ocr_engine": "Tesseract",
+                "ocr_engine": ocr_diag.get("ocr_engine", "Windows.Media.Ocr" if os.name == "nt" else "Tesseract"),
                 "pages_processed": pages_processed,
                 "page_dimensions": ocr_diag.get("page_dimensions", []),
                 "characters_per_page": ocr_diag.get("characters_per_page", []),
@@ -903,7 +967,7 @@ class BillParserService:
             "provider_detected": provider_key,
             "is_image_upload": True,
             "ocr_applied": True,
-            "ocr_engine": "Tesseract",
+            "ocr_engine": ocr_diag.get("ocr_engine", "Windows.Media.Ocr" if os.name == "nt" else "Tesseract"),
             "page_dimensions": ocr_diag.get("page_dimensions", []),
             "characters_per_page": ocr_diag.get("characters_per_page", []),
             "ocr_runtime_available": ocr_diag.get("ocr_runtime_available", True),
