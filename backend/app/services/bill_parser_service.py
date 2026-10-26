@@ -359,7 +359,6 @@ class BillParserService:
 
         return "", diag
 
-    def _extract_text_from_image(
         
     def _extract_text_from_image(
         self,
