@@ -157,89 +157,106 @@ class BillParserService:
     # 2. Windows Native OCR Fallback (Scanned / Image-Only PDFs)
     # -------------------------------------------------------------------------
     def _extract_text_via_ocr(
+        
+    def _extract_text_via_ocr(
         self,
         file_bytes: bytes,
         max_pages: int = 5,
     ) -> Tuple[str, List[str], int, Dict[str, Any]]:
         """
-        Render PDF pages to raster bitmaps via pypdfium2 and extract text using Windows Native OCR.
-        Uses spatial deskewed row reconstruction to preserve horizontal table structures across columns.
-        Strictly fallback: used only when digital PDF text stream contains < 15 alphanumeric characters.
+        Extract text from scanned PDF pages using Tesseract OCR.
+        Supports Linux deployments and limits processing to max_pages.
         """
         warnings: List[str] = []
         ocr_diag: Dict[str, Any] = {
             "page_dimensions": [],
             "characters_per_page": [],
             "ocr_runtime_available": False,
+            "ocr_engine": "Tesseract",
         }
 
         if pdfium is None:
             warnings.append(
-                "PDF page rendering library (pypdfium2) is not available. Scanned PDF OCR fallback disabled."
+                "PDF rendering library (pypdfium2) is unavailable. "
+                "Scanned PDF OCR is disabled."
             )
             return "", warnings, 0, ocr_diag
 
         try:
-            import winrt.windows.graphics.imaging as winrt_imaging
-            import winrt.windows.media.ocr as winrt_ocr
-            import winrt.windows.storage.streams as winrt_streams
-        except ImportError:
-            winrt_imaging = None
-            winrt_ocr = None
-            winrt_streams = None
-
-        if winrt_ocr is None or winrt_imaging is None or winrt_streams is None:
-            warnings.append(
-                "Windows Native OCR runtime bindings (winrt) are not available. Scanned PDF OCR fallback disabled."
-            )
+            import pytesseract
+            pytesseract.get_tesseract_version()
+        except Exception as exc:
+            warnings.append(f"Tesseract OCR is unavailable: {exc}")
+            ocr_diag["error"] = str(exc)
             return "", warnings, 0, ocr_diag
-
-        ocr_diag["ocr_runtime_available"] = True
 
         try:
             pdf = pdfium.PdfDocument(file_bytes)
         except Exception as exc:
-            warnings.append(f"Failed to open PDF document for page rendering: {str(exc)}")
+            warnings.append(f"Failed to open PDF for OCR: {exc}")
             return "", warnings, 0, ocr_diag
 
-        total_doc_pages = len(pdf)
-        pages_to_process = min(total_doc_pages, max_pages)
-        if total_doc_pages > max_pages:
+        total_pages = len(pdf)
+        pages_to_process = min(total_pages, max_pages)
+
+        if total_pages > max_pages:
             warnings.append(
-                f"Document contains {total_doc_pages} pages; processed first {max_pages} pages for OCR extraction."
+                f"Document contains {total_pages} pages; "
+                f"only the first {max_pages} pages were processed by OCR."
             )
 
-        # Initialize Windows Native OCR Engine
-        try:
-            engine = winrt_ocr.OcrEngine.try_create_from_user_profile_languages()
-            if not engine:
-                avail = getattr(winrt_ocr.OcrEngine, "available_recognizer_languages", None)
-                if avail and len(avail) > 0:
-                    engine = winrt_ocr.OcrEngine.try_create_from_language(avail[0])
-            if not engine:
-                warnings.append(
-                    "Windows Native OCR engine could not be initialized: no supported OCR languages configured."
-                )
-                return "", warnings, pages_to_process, ocr_diag
-        except Exception as exc:
-            warnings.append(f"Windows Native OCR engine initialization error: {str(exc)}")
-            return "", warnings, pages_to_process, ocr_diag
-
+        ocr_diag["ocr_runtime_available"] = True
         extracted_page_texts: List[str] = []
+
         for page_idx in range(pages_to_process):
             try:
                 page = pdf[page_idx]
-                # Render at 2.0x scale (~150-200 dpi) for crisp OCR recognition
-                pil_page = page.render(scale=2.0).to_pil().convert("L")
-                page_text, page_diag = self._ocr_pil_image(pil_page, engine, winrt_imaging, winrt_streams)
+                pil_page = page.render(scale=2.0).to_pil()
+
+                if ImageOps is not None:
+                    pil_page = ImageOps.exif_transpose(pil_page)
+
+                pil_page = pil_page.convert("L")
+                if ImageOps is not None:
+                    pil_page = ImageOps.autocontrast(pil_page)
+
+                try:
+                    page_text = pytesseract.image_to_string(
+                        pil_page,
+                        lang="eng+mar+hin",
+                        config="--oem 3 --psm 6",
+                    )
+                except Exception as multilingual_exc:
+                    warnings.append(
+                        "Multilingual PDF OCR failed; retrying English OCR: "
+                        f"{multilingual_exc}"
+                    )
+                    page_text = pytesseract.image_to_string(
+                        pil_page,
+                        lang="eng",
+                        config="--oem 3 --psm 6",
+                    )
+
+                page_text = page_text.strip()
                 extracted_page_texts.append(page_text)
-                ocr_diag["page_dimensions"].append(page_diag["dimensions"])
-                ocr_diag["characters_per_page"].append(page_diag["characters"])
+
+                ocr_diag["page_dimensions"].append(
+                    [pil_page.width, pil_page.height]
+                )
+                ocr_diag["characters_per_page"].append(len(page_text))
+
             except Exception as page_exc:
-                warnings.append(f"OCR processing failed on page {page_idx + 1}: {str(page_exc)}")
+                warnings.append(
+                    f"OCR processing failed on PDF page {page_idx + 1}: "
+                    f"{page_exc}"
+                )
+                extracted_page_texts.append("")
+                ocr_diag["page_dimensions"].append([])
+                ocr_diag["characters_per_page"].append(0)
 
         combined_text = "\n".join(extracted_page_texts)
         return combined_text, warnings, pages_to_process, ocr_diag
+
 
     def _ocr_pil_image(
         self,
