@@ -1,0 +1,10 @@
+
+services:
+  - type: web
+    name: reliable-household-energy-forecasting
+    runtime: python
+    buildCommand: |
+      apt-get update
+      apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-mar tesseract-ocr-hin
+      pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
