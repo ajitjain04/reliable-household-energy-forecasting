@@ -717,7 +717,7 @@ class BillParserService:
         if is_ocr:
             raw_meta.update({
                 "ocr_applied": True,
-                "ocr_engine": "Windows.Media.Ocr",
+                "ocr_engine": "Tesseract",
                 "pages_processed": pages_processed,
                 "page_dimensions": ocr_diag.get("page_dimensions", []),
                 "characters_per_page": ocr_diag.get("characters_per_page", []),
@@ -905,7 +905,7 @@ class BillParserService:
             "provider_detected": provider_key,
             "is_image_upload": True,
             "ocr_applied": True,
-            "ocr_engine": "Windows.Media.Ocr",
+            "ocr_engine": "Tesseract",
             "page_dimensions": ocr_diag.get("page_dimensions", []),
             "characters_per_page": ocr_diag.get("characters_per_page", []),
             "ocr_runtime_available": ocr_diag.get("ocr_runtime_available", True),
